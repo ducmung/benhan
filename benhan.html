@@ -3,174 +3,416 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Bệnh Án Điện Tử</title>
+    <title>Phòng Khám Đức Mừng - Quản Lý Bệnh Án</title>
+    
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Thư viện hỗ trợ: FileSaver, Docx (Xuất Word) và LocalForage (Lưu Database) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.2.2/build/index.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    
+    <!-- Thư viện Google Drive API -->
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+
     <style>
-        body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; padding: 20px; }
-        .container { background: #fff; padding: 30px; border-radius: 10px; max-width: 800px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .form-label { font-weight: bold; margin-top: 10px; }
-        .img-preview { width: 100px; height: 133px; object-fit: cover; border: 1px dashed #ccc; margin-top: 5px; display: none; cursor: pointer; }
-        .section-title { font-size: 18px; font-weight: bold; color: #d32f2f; border-bottom: 2px solid #d32f2f; margin-top: 30px; padding-bottom: 5px; }
+        body { background-color: #f0f2f5; font-family: 'Times New Roman', Times, serif; }
+        .sidebar { background: #fff; height: 100vh; overflow-y: auto; border-right: 1px solid #ddd; padding: 20px; }
+        .main-content { height: 100vh; overflow-y: auto; padding: 20px; }
+        .patient-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #eee; transition: 0.2s; }
+        .patient-item:hover { background-color: #e9ecef; }
+        .form-section { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;}
+        .section-title { color: #0d6efd; font-weight: bold; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; margin-bottom: 15px; text-transform: uppercase; }
+        .preview-img { width: 150px; height: 150px; object-fit: cover; border: 1px dashed #ccc; margin-top: 5px; display: none; }
+        .accordion-button { font-weight: bold; color: #198754; }
+        .drive-status { font-size: 14px; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2 class="text-center fw-bold text-primary">HỒ SƠ BỆNH ÁN</h2>
-    
-    <form id="benhAnForm">
-        <!-- Thông tin hành chính -->
-        <div class="row">
-            <div class="col-md-6"><label class="form-label">NGÀY THÁNG :</label><input type="date" id="ngay1" class="form-control"></div>
-            <div class="col-md-6"><label class="form-label">HỌ TÊN :</label><input type="text" id="hoTen" class="form-control" required></div>
-            <div class="col-md-6"><label class="form-label">NĂM SINH :</label><input type="text" id="namSinh" class="form-control"></div>
-            <div class="col-md-6"><label class="form-label">ĐT :</label><input type="text" id="dienThoai" class="form-control"></div>
-            <div class="col-md-12"><label class="form-label">ĐỊA CHỈ :</label><input type="text" id="diaChi" class="form-control"></div>
+<div class="container-fluid">
+    <div class="row">
+        <!-- CỘT TRÁI: TÌM KIẾM & DANH SÁCH BỆNH NHÂN -->
+        <div class="col-md-3 sidebar shadow-sm">
+            <h5 class="text-primary fw-bold mb-3">TÍCH HỢP GOOGLE DRIVE</h5>
+            <button id="authBtn" class="btn btn-outline-primary w-100 mb-2 fw-bold" onclick="handleAuthClick()">Bật Kết Nối Google Drive</button>
+            <div id="driveStatus" class="drive-status text-danger text-center mb-4">❌ Chưa kết nối Drive</div>
+
+            <hr>
+            
+            <h5 class="text-primary fw-bold mb-3">DANH SÁCH BỆNH NHÂN</h5>
+            <button class="btn btn-success w-100 mb-3 fw-bold" onclick="taoMoi()">+ THÊM BỆNH ÁN MỚI</button>
+            
+            <div class="input-group mb-3">
+                <input type="text" id="searchBox" class="form-control border-primary" placeholder="🔍 Tìm tên..." onkeyup="timKiemLocal()">
+                <button class="btn btn-primary" onclick="timKiemTrenDrive()">Tìm trên Drive</button>
+            </div>
+
+            <div id="patientList">
+                <!-- Danh sách sẽ được tạo tự động qua JS -->
+            </div>
         </div>
 
-        <!-- Khám Lần 1 -->
-        <label class="form-label">TRIỆU CHỨNG LÂM SÀNG :</label>
-        <textarea id="trieuChung" class="form-control" rows="3"></textarea>
+        <!-- CỘT PHẢI: KHUNG NHẬP LIỆU BỆNH ÁN -->
+        <div class="col-md-9 main-content">
+            <div class="form-section">
+                <!-- TIÊU ĐỀ PHÒNG KHÁM -->
+                <div class="text-center mb-4 border-bottom pb-3">
+                    <h2 class="text-danger fw-bold m-0 text-uppercase" style="font-size: 28px;">PHÒNG KHÁM ĐÔNG Y ĐỨC MỪNG</h2>
+                    <h3 class="text-primary fw-bold mt-2">HỒ SƠ BỆNH ÁN</h3>
+                </div>
 
-        <label class="form-label text-danger">LƯỠI : (ấn vào để chèn ảnh kích thước 6x8mm)</label>
-        <input type="file" id="anhLuoi1" class="form-control" accept="image/*" onchange="previewImg(this, 'preview1')">
-        <img id="preview1" class="img-preview" title="Ảnh lưỡi 1">
+                <div class="d-flex justify-content-end mb-4 gap-2">
+                    <button class="btn btn-primary px-4 fw-bold" onclick="luuBenhAn()">💾 Lưu Tạm & Ghi Tiếp</button>
+                    <button class="btn btn-warning px-4 fw-bold" onclick="xuatWord()">📄 Xuất WORD & Lưu lên Drive</button>
+                </div>
 
-        <label class="form-label">CÁCH TRỊ :</label>
-        <input type="text" id="cachTri" class="form-control">
+                <input type="hidden" id="patientId">
 
-        <label class="form-label">ĐƠN THUỐC :</label>
-        <textarea id="donThuoc" class="form-control" rows="4"></textarea>
+                <!-- THÔNG TIN HÀNH CHÍNH -->
+                <div class="section-title">THÔNG TIN HÀNH CHÍNH</div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4"><label class="fw-bold">NGÀY THÁNG:</label><input type="date" id="ngayLap" class="form-control"></div>
+                    <div class="col-md-8"><label class="fw-bold">HỌ TÊN:</label><input type="text" id="hoTen" class="form-control text-uppercase" placeholder="Nguyễn Văn A"></div>
+                    <div class="col-md-4"><label class="fw-bold">NĂM SINH:</label><input type="text" id="namSinh" class="form-control"></div>
+                    <div class="col-md-4"><label class="fw-bold">ĐIỆN THOẠI:</label><input type="text" id="dienThoai" class="form-control"></div>
+                    <div class="col-md-12"><label class="fw-bold">ĐỊA CHỈ:</label><input type="text" id="diaChi" class="form-control"></div>
+                </div>
 
-        <div class="row">
-            <div class="col-md-6"><label class="form-label">SỐ THANG :</label><input type="text" id="soThang1" class="form-control"></div>
-            <div class="col-md-6"><label class="form-label">THÀNH TIỀN :</label><input type="text" id="thanhTien1" class="form-control"></div>
+                <!-- CÁC LẦN KHÁM (1 -> 16) DƯỚI DẠNG ACCORDION -->
+                <div class="section-title">CHI TIẾT ĐIỀU TRỊ (TỐI ĐA 16 LẦN)</div>
+                <div class="accordion" id="accordionVisits">
+                    <!-- Javascript sẽ sinh mã cho 16 lần khám ở đây -->
+                </div>
+            </div>
         </div>
-
-        <!-- Khám Lần 2 -->
-        <div class="section-title">TÁI KHÁM</div>
-        <label class="form-label">LẤY LẦN 2 :</label>
-        <textarea id="layLan2" class="form-control" rows="2"></textarea>
-        
-        <label class="form-label">NGÀY THÁNG :</label>
-        <input type="date" id="ngay2" class="form-control">
-
-        <label class="form-label text-danger">LƯỠI : (ấn vào để chèn ảnh kích thước 6x8mm)</label>
-        <input type="file" id="anhLuoi2" class="form-control" accept="image/*" onchange="previewImg(this, 'preview2')">
-        <img id="preview2" class="img-preview" title="Ảnh lưỡi 2">
-
-        <label class="form-label">GIA GIẢM :</label>
-        <textarea id="giaGiam" class="form-control" rows="2"></textarea>
-
-        <label class="form-label">Số Thang / thành tiền :</label>
-        <input type="text" id="soThangTien2" class="form-control">
-
-        <!-- Nút Lưu -->
-        <div class="text-center mt-4">
-            <button type="submit" class="btn btn-success btn-lg w-100" id="btnLuu">LƯU BỆNH ÁN LÊN SERVER</button>
-        </div>
-    </form>
+    </div>
 </div>
 
-<!-- THƯ VIỆN FIREBASE -->
-<script type="module">
-    // 1. Import Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+<script>
+    // ==========================================
+    // CẤU HÌNH GOOGLE DRIVE API (CỦA BẠN)
+    // ==========================================
+    const API_KEY = 'AIzaSyC-nbFPgRmzjxL1XahJNm56XjHWW1OjALE';
+    const CLIENT_ID = '153127793994-13p4ic6g8die83meu4u9cp2vvjojfe6k.apps.googleusercontent.com';
+    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+    const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
-    // 2. CẤU HÌNH FIREBASE CỦA BẠN
-    const firebaseConfig = {
-        apiKey: "AIzaSyDEZC9nQNR0jXa24rMXThX9RGoQeVhPd3k",
-        authDomain: "quanlybenhan-7c92f.firebaseapp.com",
-        projectId: "quanlybenhan-7c92f",
-        storageBucket: "quanlybenhan-7c92f.firebasestorage.app",
-        messagingSenderId: "779969332650",
-        appId: "1:779969332650:web:77a15b8bc012001ae457d3",
-        measurementId: "G-33ECM18Q9R"
-    };
+    let tokenClient;
+    let accessToken = null;
 
-    // 3. Khởi tạo Firebase
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
-    // Hàm upload ảnh lên Firebase Storage và lấy Link ảnh
-    async function uploadImage(file, pathName) {
-        if (!file) return "";
-        const storageRef = ref(storage, 'anh_luoi/' + Date.now() + '_' + pathName);
-        await uploadBytes(storageRef, file);
-        return await getDownloadURL(storageRef);
+    function gapiLoaded() {
+        gapi.load('client', async () => {
+            await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
+        });
     }
 
-    // Xử lý sự kiện bấm LƯU
-    document.getElementById("benhAnForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById("btnLuu");
-        btn.innerText = "ĐANG LƯU DỮ LIỆU... VUI LÒNG ĐỢI";
-        btn.disabled = true;
+    function gisLoaded() {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: (tokenResponse) => {
+                accessToken = tokenResponse.access_token;
+                document.getElementById('driveStatus').innerText = "✅ Đã kết nối Google Drive";
+                document.getElementById('driveStatus').className = "drive-status text-success text-center mb-4";
+                document.getElementById('authBtn').innerText = "Tài khoản đã kết nối";
+                document.getElementById('authBtn').disabled = true;
+            },
+        });
+    }
+
+    function handleAuthClick() {
+        tokenClient.requestAccessToken({prompt: 'consent'});
+    }
+
+    async function uploadToDrive(blob, fileName) {
+        if (!accessToken) return; // Nếu chưa đăng nhập thì bỏ qua bước tải lên Drive
+        
+        const metadata = { name: fileName, mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', blob);
 
         try {
-            // Lấy file ảnh
-            const file1 = document.getElementById("anhLuoi1").files[0];
-            const file2 = document.getElementById("anhLuoi2").files[0];
-
-            // Upload ảnh và lấy link online
-            const urlLuoi1 = await uploadImage(file1, 'luoi1.jpg');
-            const urlLuoi2 = await uploadImage(file2, 'luoi2.jpg');
-
-            // Đẩy dữ liệu vào Database (Firestore)
-            await addDoc(collection(db, "BenhAn"), {
-                ngay1: document.getElementById("ngay1").value,
-                hoTen: document.getElementById("hoTen").value,
-                namSinh: document.getElementById("namSinh").value,
-                dienThoai: document.getElementById("dienThoai").value,
-                diaChi: document.getElementById("diaChi").value,
-                trieuChung: document.getElementById("trieuChung").value,
-                cachTri: document.getElementById("cachTri").value,
-                donThuoc: document.getElementById("donThuoc").value,
-                soThang1: document.getElementById("soThang1").value,
-                thanhTien1: document.getElementById("thanhTien1").value,
-                anhLuoi1: urlLuoi1, 
-
-                layLan2: document.getElementById("layLan2").value,
-                ngay2: document.getElementById("ngay2").value,
-                giaGiam: document.getElementById("giaGiam").value,
-                soThangTien2: document.getElementById("soThangTien2").value,
-                anhLuoi2: urlLuoi2,
-                
-                taoLuc: new Date() // Lưu thời gian tạo để sắp xếp
+            const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                method: 'POST',
+                headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
+                body: form
             });
-
-            alert("Đã lưu bệnh án thành công lên Server Firebase!");
-            document.getElementById("benhAnForm").reset();
-            document.querySelectorAll('.img-preview').forEach(img => img.style.display = 'none');
-
-        } catch (error) {
-            console.error("Lỗi: ", error);
-            alert("Lỗi khi lưu: " + error.message);
-        } finally {
-            btn.innerText = "LƯU BỆNH ÁN LÊN SERVER";
-            btn.disabled = false;
+            const resJson = await res.json();
+            alert("✅ Bản sao lưu Word đã được đẩy tự động lên Google Drive!");
+        } catch(e) {
+            console.error("Lỗi Drive:", e);
+            alert("❌ Đã lưu máy tính nhưng đẩy lên Drive thất bại.");
         }
-    });
-</script>
+    }
 
-<script>
-    // Preview ảnh ngoài giao diện HTML
-    function previewImg(input, imgId) {
+    async function timKiemTrenDrive() {
+        if (!accessToken) { alert("Vui lòng Bật kết nối Google Drive trước!"); return; }
+        const query = document.getElementById('searchBox').value.trim();
+        if(!query) { alert("Vui lòng nhập tên để tìm!"); return; }
+
+        try {
+            const res = await gapi.client.drive.files.list({
+                q: `name contains '${query}' and mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document' and trashed = false`,
+                fields: 'files(id, name, webViewLink)',
+                spaces: 'drive'
+            });
+            
+            const files = res.result.files;
+            const listDiv = document.getElementById('patientList');
+            listDiv.innerHTML = `<div class="text-success fw-bold mb-2">Đã tìm thấy ${files.length} file trên Drive:</div>`;
+            
+            if(files.length === 0) { listDiv.innerHTML += `<i>Không thấy file nào khớp tên.</i>`; return; }
+            
+            files.forEach(file => {
+                listDiv.innerHTML += `
+                    <div class="patient-item border-start border-4 border-success rounded mb-2 shadow-sm" onclick="window.open('${file.webViewLink}', '_blank')">
+                        <strong class="text-success">📄 ${file.name}</strong><br>
+                        <small class="text-muted">Bấm để mở file trên Google Docs</small>
+                    </div>
+                `;
+            });
+        } catch (err) {
+            alert("Lỗi khi tìm trên Drive: " + err.message);
+        }
+    }
+
+    // ==========================================
+    // CẤU TRÚC GIAO DIỆN & QUẢN LÝ LOCAL
+    // ==========================================
+    const accordionContainer = document.getElementById('accordionVisits');
+    for (let i = 1; i <= 16; i++) {
+        const isFirst = (i === 1);
+        const title = isFirst ? `LẦN 1 (Khám Đầu)` : `LẦN ${i} (Tái Khám)`;
+        
+        let fieldsHTML = isFirst ? `
+                <div class="mb-2"><label class="fw-bold">TRIỆU CHỨNG LÂM SÀNG:</label><textarea id="trieuChung_1" class="form-control" rows="2"></textarea></div>
+                <div class="mb-2 bg-white p-2 border rounded"><label class="fw-bold text-danger">LƯỠI (ấn vào chèn ảnh 8x8cm):</label><input type="file" id="anhFile_1" class="form-control" accept="image/*" onchange="previewImg(this, 1)"><input type="hidden" id="anhBase64_1"><img id="preview_1" class="preview-img"></div>
+                <div class="mb-2"><label class="fw-bold">CÁCH TRỊ:</label><input type="text" id="cachTri_1" class="form-control"></div>
+                <div class="mb-2"><label class="fw-bold">ĐƠN THUỐC:</label><textarea id="donThuoc_1" class="form-control" rows="3"></textarea></div>
+                <div class="row"><div class="col-md-6"><label class="fw-bold">SỐ THANG:</label><input type="text" id="soThang_1" class="form-control"></div><div class="col-md-6"><label class="fw-bold">THÀNH TIỀN:</label><input type="text" id="thanhTien_1" class="form-control"></div></div>
+            ` : `
+                <div class="row mb-2"><div class="col-md-8"><label class="fw-bold">LẤY LẦN ${i}:</label><input type="text" id="layLan_${i}" class="form-control" placeholder="..."></div><div class="col-md-4"><label class="fw-bold">NGÀY THÁNG:</label><input type="date" id="ngay_${i}" class="form-control"></div></div>
+                <div class="mb-2 bg-white p-2 border rounded"><label class="fw-bold text-danger">LƯỠI (ấn vào chèn ảnh 8x8cm):</label><input type="file" id="anhFile_${i}" class="form-control" accept="image/*" onchange="previewImg(this, ${i})"><input type="hidden" id="anhBase64_${i}"><img id="preview_${i}" class="preview-img"></div>
+                <div class="mb-2"><label class="fw-bold">GIA GIẢM:</label><textarea id="giaGiam_${i}" class="form-control" rows="2"></textarea></div>
+                <div class="mb-2"><label class="fw-bold">Số Thang / thành tiền:</label><input type="text" id="soThangTien_${i}" class="form-control"></div>
+            `;
+
+        const collapseClass = isFirst ? 'show' : '';
+        accordionContainer.innerHTML += `
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading_${i}">
+                    <button class="accordion-button ${isFirst ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_${i}">${title}</button>
+                </h2>
+                <div id="collapse_${i}" class="accordion-collapse collapse ${collapseClass}" data-bs-parent="#accordionVisits">
+                    <div class="accordion-body bg-light">${fieldsHTML}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function previewImg(input, index) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
-            reader.onload = function (e) {
-                const img = document.getElementById(imgId);
-                img.src = e.target.result;
-                img.style.display = 'block';
-            };
+            reader.onload = function(e) {
+                document.getElementById(`preview_${index}`).src = e.target.result;
+                document.getElementById(`preview_${index}`).style.display = 'block';
+                document.getElementById(`anhBase64_${index}`).value = e.target.result; 
+            }
             reader.readAsDataURL(input.files[0]);
         }
     }
+
+    let patients = [];
+
+    async function taiDanhSach() {
+        patients = (await localforage.getItem('DanhSachBenhNhan_V3')) || [];
+        timKiemLocal();
+    }
+
+    function timKiemLocal() {
+        const keyword = document.getElementById('searchBox').value.toLowerCase();
+        const filtered = patients.filter(p => (p.hoTen && p.hoTen.toLowerCase().includes(keyword)));
+        const listDiv = document.getElementById('patientList');
+        listDiv.innerHTML = '';
+        filtered.forEach(p => {
+            listDiv.innerHTML += `
+                <div class="patient-item border-start border-4 border-primary rounded mb-2 shadow-sm" onclick="taiBenhAn('${p.id}')">
+                    <strong class="text-danger">${p.hoTen || 'Chưa có tên'}</strong><br>
+                    <small class="text-muted">📞 ${p.dienThoai || '---'}</small>
+                </div>
+            `;
+        });
+    }
+
+    function taoMoi() {
+        document.getElementById('patientId').value = '';
+        document.querySelectorAll('input:not([type="file"]), textarea').forEach(el => { if(el.id !== 'searchBox') el.value = ''; });
+        document.querySelectorAll('.preview-img').forEach(el => { el.src=''; el.style.display='none'; });
+    }
+
+    async function luuBenhAn() {
+        const id = document.getElementById('patientId').value || Date.now().toString();
+        const patientData = {
+            id: id,
+            ngayLap: document.getElementById('ngayLap').value,
+            hoTen: document.getElementById('hoTen').value,
+            namSinh: document.getElementById('namSinh').value,
+            dienThoai: document.getElementById('dienThoai').value,
+            diaChi: document.getElementById('diaChi').value,
+            visits: []
+        };
+
+        for (let i = 1; i <= 16; i++) {
+            let visit = { lan: i };
+            if (i === 1) {
+                visit.trieuChung = document.getElementById('trieuChung_1').value; visit.anhLuoi = document.getElementById('anhBase64_1').value;
+                visit.cachTri = document.getElementById('cachTri_1').value; visit.donThuoc = document.getElementById('donThuoc_1').value;
+                visit.soThang = document.getElementById('soThang_1').value; visit.thanhTien = document.getElementById('thanhTien_1').value;
+            } else {
+                visit.layLan = document.getElementById(`layLan_${i}`).value; visit.ngay = document.getElementById(`ngay_${i}`).value;
+                visit.anhLuoi = document.getElementById(`anhBase64_${i}`).value; visit.giaGiam = document.getElementById(`giaGiam_${i}`).value;
+                visit.soThangTien = document.getElementById(`soThangTien_${i}`).value;
+            }
+            patientData.visits.push(visit);
+        }
+
+        const existingIndex = patients.findIndex(p => p.id === id);
+        if(existingIndex >= 0) { patients[existingIndex] = patientData; } else { patients.unshift(patientData); }
+
+        await localforage.setItem('DanhSachBenhNhan_V3', patients);
+        document.getElementById('patientId').value = id;
+        taiDanhSach();
+        alert('✅ Đã lưu để có thể ghi tiếp lần sau!');
+    }
+
+    function taiBenhAn(id) {
+        const p = patients.find(x => x.id === id);
+        if(!p) return;
+        taoMoi();
+        document.getElementById('patientId').value = p.id;
+        document.getElementById('ngayLap').value = p.ngayLap || ''; document.getElementById('hoTen').value = p.hoTen || '';
+        document.getElementById('namSinh').value = p.namSinh || ''; document.getElementById('dienThoai').value = p.dienThoai || '';
+        document.getElementById('diaChi').value = p.diaChi || '';
+
+        p.visits.forEach((v, idx) => {
+            let i = idx + 1;
+            if (i === 1) {
+                document.getElementById('trieuChung_1').value = v.trieuChung || ''; document.getElementById('cachTri_1').value = v.cachTri || '';
+                document.getElementById('donThuoc_1').value = v.donThuoc || ''; document.getElementById('soThang_1').value = v.soThang || ''; document.getElementById('thanhTien_1').value = v.thanhTien || '';
+            } else {
+                document.getElementById(`layLan_${i}`).value = v.layLan || ''; document.getElementById(`ngay_${i}`).value = v.ngay || '';
+                document.getElementById(`giaGiam_${i}`).value = v.giaGiam || ''; document.getElementById(`soThangTien_${i}`).value = v.soThangTien || '';
+            }
+            if (v.anhLuoi) {
+                document.getElementById(`anhBase64_${i}`).value = v.anhLuoi;
+                document.getElementById(`preview_${i}`).src = v.anhLuoi; document.getElementById(`preview_${i}`).style.display = 'block';
+            }
+        });
+    }
+
+    window.onload = taiDanhSach;
+
+    // ==========================================
+    // XUẤT RA FILE WORD VÀ TẢI LÊN DRIVE
+    // ==========================================
+    function base64ToArrayBuffer(base64) {
+        if(!base64) return null;
+        var binary_string = window.atob(base64.split(',')[1]);
+        var len = binary_string.length;
+        var bytes = new Uint8Array(len);
+        for (var i = 0; i < len; i++) { bytes[i] = binary_string.charCodeAt(i); }
+        return bytes.buffer;
+    }
+
+    async function xuatWord() {
+        const { Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType } = docx;
+
+        const formatDate = (dateStr) => dateStr ? dateStr.split('-').reverse().join('/') : "....................";
+        const hoTen = document.getElementById('hoTen').value.toUpperCase() || "........................................";
+        
+        let docChildren = [
+            new Paragraph({ alignment: AlignmentType.CENTER, children: [ new TextRun({ text: "PHÒNG KHÁM ĐÔNG Y ĐỨC MỪNG", bold: true, size: 32, color: "FF0000" }) ] }),
+            new Paragraph({ alignment: AlignmentType.CENTER, children: [ new TextRun({ text: "HỒ SƠ BỆNH ÁN", bold: true, size: 28 }) ] }),
+            new Paragraph({ text: "\n" }),
+            new Paragraph({ children: [ new TextRun({ text: `NGÀY THÁNG : `, bold: true }), new TextRun(formatDate(document.getElementById('ngayLap').value)) ] }),
+            new Paragraph({ children: [ new TextRun({ text: `HỌ TÊN : `, bold: true }), new TextRun(hoTen) ] }),
+            new Paragraph({ children: [ new TextRun({ text: `NĂM SINH : `, bold: true }), new TextRun(document.getElementById('namSinh').value || "............") ] }),
+            new Paragraph({ children: [ new TextRun({ text: `ĐỊA CHỈ : `, bold: true }), new TextRun(document.getElementById('diaChi').value || "..................................................") ] }),
+            new Paragraph({ children: [ new TextRun({ text: `ĐT : `, bold: true }), new TextRun(document.getElementById('dienThoai').value || "........................") ] }),
+            new Paragraph({ text: "\n" })
+        ];
+
+        for (let i = 1; i <= 16; i++) {
+            if (i === 1) {
+                const trieuChung = document.getElementById('trieuChung_1').value;
+                if(!trieuChung && !document.getElementById('anhBase64_1').value && !document.getElementById('donThuoc_1').value) continue;
+
+                docChildren.push(
+                    new Paragraph({ children: [ new TextRun({ text: `TRIỆU CHỨNG LÂM SÀNG : `, bold: true }) ] }),
+                    ...trieuChung.split('\n').map(line => new Paragraph({ text: line })),
+                    new Paragraph({ children: [ new TextRun({ text: `LƯỠI :`, bold: true }) ] })
+                );
+
+                const anhBuf = base64ToArrayBuffer(document.getElementById('anhBase64_1').value);
+                if (anhBuf) {
+                    docChildren.push(new Paragraph({ children: [new ImageRun({ data: anhBuf, transformation: { width: 300, height: 300 } })] }));
+                } else { docChildren.push(new Paragraph({ text: "   (Chưa chèn ảnh)" })); }
+
+                docChildren.push(
+                    new Paragraph({ children: [ new TextRun({ text: `CÁCH TRỊ : `, bold: true }), new TextRun(document.getElementById('cachTri_1').value) ] }),
+                    new Paragraph({ children: [ new TextRun({ text: `ĐƠN THUỐC : `, bold: true }) ] }),
+                    ...(document.getElementById('donThuoc_1').value).split('\n').map(line => new Paragraph({ text: line })),
+                    new Paragraph({ children: [ new TextRun({ text: `SỐ THANG : `, bold: true }), new TextRun(document.getElementById('soThang_1').value) ] }),
+                    new Paragraph({ children: [ new TextRun({ text: `THÀNH TIỀN : `, bold: true }), new TextRun(document.getElementById('thanhTien_1').value) ] }),
+                    new Paragraph({ text: "\n" })
+                );
+            } else {
+                const layLan = document.getElementById(`layLan_${i}`).value;
+                const ngay = document.getElementById(`ngay_${i}`).value;
+                const anh = document.getElementById(`anhBase64_${i}`).value;
+                const giaGiam = document.getElementById(`giaGiam_${i}`).value;
+                
+                if (!layLan && !ngay && !anh && !giaGiam) continue;
+
+                docChildren.push(
+                    new Paragraph({ children: [ new TextRun({ text: `LẤY LẦN ${i} : `, bold: true }), new TextRun(layLan) ] }),
+                    new Paragraph({ children: [ new TextRun({ text: `NGÀY THÁNG : `, bold: true }), new TextRun(formatDate(ngay)) ] }),
+                    new Paragraph({ children: [ new TextRun({ text: `LƯỠI :`, bold: true }) ] })
+                );
+
+                const anhBuf = base64ToArrayBuffer(anh);
+                if (anhBuf) { docChildren.push(new Paragraph({ children: [new ImageRun({ data: anhBuf, transformation: { width: 300, height: 300 } })] })); } 
+                else { docChildren.push(new Paragraph({ text: "   (Chưa chèn ảnh)" })); }
+
+                docChildren.push(
+                    new Paragraph({ children: [ new TextRun({ text: `GIA GIẢM : `, bold: true }) ] }),
+                    ...giaGiam.split('\n').map(line => new Paragraph({ text: line })),
+                    new Paragraph({ children: [ new TextRun({ text: `Số Thang / thành tiền : `, bold: true }), new TextRun(document.getElementById(`soThangTien_${i}`).value) ] }),
+                    new Paragraph({ text: "--------------------------------------------------------\n" })
+                );
+            }
+        }
+
+        const doc = new Document({ sections: [{ properties: {}, children: docChildren }] });
+
+        Packer.toBlob(doc).then(async (blob) => {
+            const tenFile = `BenhAn_${hoTen.replace(/\s+/g, '_')}.docx`;
+            saveAs(blob, tenFile); // Lưu xuống máy tính
+            
+            // Đẩy lên Google Drive nếu đã kết nối
+            if(accessToken) {
+                await uploadToDrive(blob, tenFile);
+            } else {
+                alert("Bạn chưa đăng nhập Google Drive. File chỉ được lưu trên máy tính.");
+            }
+        });
+    }
 </script>
+
 </body>
 </html>
