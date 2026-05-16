@@ -1,4 +1,4 @@
-<benhangithud.html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -78,36 +78,22 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
-    // =========================================================
-    // 2. THAY THẾ ĐOẠN CONFIG CỦA BẠN VÀO ĐÂY (Lấy từ Bước 4 Phần 1)
+    // 2. CẤU HÌNH FIREBASE CỦA BẠN
     const firebaseConfig = {
-        // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDEZC9nQNR0jXa24rMXThX9RGoQeVhPd3k",
-  authDomain: "quanlybenhan-7c92f.firebaseapp.com",
-  projectId: "quanlybenhan-7c92f",
-  storageBucket: "quanlybenhan-7c92f.firebasestorage.app",
-  messagingSenderId: "779969332650",
-  appId: "1:779969332650:web:77a15b8bc012001ae457d3",
-  measurementId: "G-33ECM18Q9R"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+        apiKey: "AIzaSyDEZC9nQNR0jXa24rMXThX9RGoQeVhPd3k",
+        authDomain: "quanlybenhan-7c92f.firebaseapp.com",
+        projectId: "quanlybenhan-7c92f",
+        storageBucket: "quanlybenhan-7c92f.firebasestorage.app",
+        messagingSenderId: "779969332650",
+        appId: "1:779969332650:web:77a15b8bc012001ae457d3",
+        measurementId: "G-33ECM18Q9R"
     };
-    // =========================================================
 
     // 3. Khởi tạo Firebase
     const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
 
@@ -116,7 +102,7 @@ const analytics = getAnalytics(app);
         if (!file) return "";
         const storageRef = ref(storage, 'anh_luoi/' + Date.now() + '_' + pathName);
         await uploadBytes(storageRef, file);
-        return await getDownloadURL(storageRef); // Trả về link ảnh online
+        return await getDownloadURL(storageRef);
     }
 
     // Xử lý sự kiện bấm LƯU
@@ -135,7 +121,7 @@ const analytics = getAnalytics(app);
             const urlLuoi1 = await uploadImage(file1, 'luoi1.jpg');
             const urlLuoi2 = await uploadImage(file2, 'luoi2.jpg');
 
-            // Đẩy tất cả dữ liệu chữ + link ảnh vào Database (Firestore)
+            // Đẩy dữ liệu vào Database (Firestore)
             await addDoc(collection(db, "BenhAn"), {
                 ngay1: document.getElementById("ngay1").value,
                 hoTen: document.getElementById("hoTen").value,
@@ -147,7 +133,7 @@ const analytics = getAnalytics(app);
                 donThuoc: document.getElementById("donThuoc").value,
                 soThang1: document.getElementById("soThang1").value,
                 thanhTien1: document.getElementById("thanhTien1").value,
-                anhLuoi1: urlLuoi1, // Link ảnh lưu trên cloud
+                anhLuoi1: urlLuoi1, 
 
                 layLan2: document.getElementById("layLan2").value,
                 ngay2: document.getElementById("ngay2").value,
@@ -155,16 +141,16 @@ const analytics = getAnalytics(app);
                 soThangTien2: document.getElementById("soThangTien2").value,
                 anhLuoi2: urlLuoi2,
                 
-                taoLuc: new Date() // Lưu thời gian tạo
+                taoLuc: new Date() // Lưu thời gian tạo để sắp xếp
             });
 
-            alert("✅ Đã lưu bệnh án thành công lên Server!");
+            alert("Đã lưu bệnh án thành công lên Server Firebase!");
             document.getElementById("benhAnForm").reset();
             document.querySelectorAll('.img-preview').forEach(img => img.style.display = 'none');
 
         } catch (error) {
             console.error("Lỗi: ", error);
-            alert("❌ Lỗi khi lưu: " + error.message);
+            alert("Lỗi khi lưu: " + error.message);
         } finally {
             btn.innerText = "LƯU BỆNH ÁN LÊN SERVER";
             btn.disabled = false;
