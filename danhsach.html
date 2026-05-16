@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh Sách Bệnh Án</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; }
+        .chi-tiet-p { margin-bottom: 8px; font-size: 16px; }
+        .chi-tiet-p strong { display: inline-block; min-width: 150px; }
+    </style>
+</head>
+<body class="p-4">
+
+<div class="container bg-white p-4 rounded shadow">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold">DANH SÁCH BỆNH ÁN ĐÃ LƯU</h2>
+        <a href="index.html" class="btn btn-outline-danger fw-bold">✚ Thêm Bệnh Án Mới</a>
+    </div>
+
+    <!-- BẢNG DANH SÁCH -->
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Ngày Khám</th>
+                <th>Họ Tên</th>
+                <th>Điện Thoại</th>
+                <th>Triệu Chứng Lâm Sàng</th>
+                <th class="text-center">Hành Động</th>
+            </tr>
+        </thead>
+        <tbody id="bangDuLieu">
+            <tr><td colspan="5" class="text-center">Đang tải dữ liệu từ server...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- GIAO DIỆN XEM CHI TIẾT (BẬT LÊN KHI BẤM NÚT) -->
+<div class="modal fade" id="chiTietModal" tabindex="-1" aria-labelledby="chiTietModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="chiTietModalLabel">CHI TIẾT HỒ SƠ BỆNH ÁN</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="noiDungChiTiet" style="font-family: 'Times New Roman', Times, serif;">
+                <!-- Dữ liệu chi tiết sẽ được tự động điền vào đây -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- THƯ VIỆN FIREBASE VÀ XỬ LÝ DỮ LIỆU -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // 1. CẤU HÌNH FIREBASE CỦA BẠN (Đã được thay thế chính xác)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDEZC9nQNR0jXa24rMXThX9RGoQeVhPd3k",
+        authDomain: "quanlybenhan-7c92f.firebaseapp.com",
+        projectId: "quanlybenhan-7c92f",
+        storageBucket: "quanlybenhan-7c92f.firebasestorage.app",
+        messagingSenderId: "779969332650",
+        appId: "1:779969332650:web:77a15b8bc012001ae457d3",
+        measurementId: "G-33ECM18Q9R"
+    };
+
+    // 2. Khởi tạo
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Mảng lưu trữ dữ liệu tạm thời để hiển thị chi tiết
+    window.danhSachBenhAn = [];
+
+    // 3. Hàm tải dữ liệu
+    async function taiDanhSach() {
+        try {
+            const q = query(collection(db, "BenhAn"), orderBy("taoLuc", "desc"));
+            const querySnapshot = await getDocs(q);
+            
+            const tbody = document.getElementById("bangDuLieu");
+            tbody.innerHTML = ""; 
+
+            if(querySnapshot.empty) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Chưa có hồ sơ bệnh án nào được lưu.</td></tr>';
+                return;
+            }
+
+            let index = 0;
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                window.danhSachBenhAn.push(data); // Đưa vào mảng
+                
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${data.ngay1 || '---'}</td>
+                    <td class="fw-bold text-danger">${data.hoTen}</td>
+                    <td>${data.dienThoai || '---'}</td>
+                    <td>${data.trieuChung ? data.trieuChung.substring(0, 50) + '...' : '---'}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-info text-white fw-bold" onclick="moChiTiet(${index})">Xem Chi Tiết</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+                index++;
+            });
+        } catch (error) {
+            console.error("Lỗi tải dữ liệu: ", error);
+            document.getElementById("bangDuLieu").innerHTML = `<tr><td colspan="5" class="text-danger text-center">Lỗi: ${error.message}</td></tr>`;
+        }
+    }
+
+    // 4. Hàm mở khung chi tiết (Dựa theo đúng khung văn bản bạn yêu cầu)
+    window.moChiTiet = function(index) {
+        const d = window.danhSachBenhAn[index];
+        
+        // Tạo HTML hiển thị ảnh lưỡi nếu có
+        const anh1 = d.anhLuoi1 ? `<img src="${d.anhLuoi1}" style="width:100px; height:133px; object-fit:cover; border:1px solid #000; margin-top:5px;">` : `<br><i>(Không có ảnh)</i>`;
+        const anh2 = d.anhLuoi2 ? `<img src="${d.anhLuoi2}" style="width:100px; height:133px; object-fit:cover; border:1px solid #000; margin-top:5px;">` : `<br><i>(Không có ảnh)</i>`;
+
+        // Định dạng xuống dòng cho text area
+        const donThuocFormat = d.donThuoc ? d.donThuoc.replace(/\n/g, '<br>') : '';
+        const giaGiamFormat = d.giaGiam ? d.giaGiam.replace(/\n/g, '<br>') : '';
+
+        const htmlChiTiet = `
+            <div class="chi-tiet-p"><strong>NGÀY THÁNG :</strong> ${d.ngay1 || ''}</div>
+            <div class="chi-tiet-p"><strong>HỌ TÊN :</strong> <span class="fw-bold text-uppercase">${d.hoTen || ''}</span></div>
+            <div class="chi-tiet-p"><strong>NĂM SINH :</strong> ${d.namSinh || ''}</div>
+            <div class="chi-tiet-p"><strong>ĐỊA CHỈ :</strong> ${d.diaChi || ''}</div>
+            <div class="chi-tiet-p"><strong>ĐT :</strong> ${d.dienThoai || ''}</div>
+            <div class="chi-tiet-p"><strong>TRIỆU CHỨNG LÂM SÀNG :</strong> ${d.trieuChung || ''}</div>
+            <div class="chi-tiet-p mt-3"><strong>LƯỠI :</strong> ${anh1}</div>
+            
+            <hr>
+            
+            <div class="chi-tiet-p"><strong>CÁCH TRỊ :</strong> ${d.cachTri || ''}</div>
+            <div class="chi-tiet-p"><strong>ĐƠN THUỐC :</strong> <br>${donThuocFormat}</div>
+            <div class="chi-tiet-p mt-2"><strong>SỐ THANG :</strong> ${d.soThang1 || ''}</div>
+            <div class="chi-tiet-p"><strong>THÀNH TIỀN :</strong> ${d.thanhTien1 || ''}</div>
+            
+            <h5 class="text-danger fw-bold mt-4 border-bottom pb-2">TÁI KHÁM</h5>
+            
+            <div class="chi-tiet-p mt-3"><strong>LẤY LẦN 2 :</strong> ${d.layLan2 || ''}</div>
+            <div class="chi-tiet-p"><strong>NGÀY THÁNG :</strong> ${d.ngay2 || ''}</div>
+            <div class="chi-tiet-p mt-3"><strong>LƯỠI (Lần 2) :</strong> ${anh2}</div>
+            <div class="chi-tiet-p mt-3"><strong>GIA GIẢM :</strong> <br>${giaGiamFormat}</div>
+            <div class="chi-tiet-p mt-2"><strong>Số Thang / thành tiền :</strong> ${d.soThangTien2 || ''}</div>
+        `;
+
+        document.getElementById("noiDungChiTiet").innerHTML = htmlChiTiet;
+        
+        // Hiển thị Modal
+        const chiTietModal = new bootstrap.Modal(document.getElementById('chiTietModal'));
+        chiTietModal.show();
+    }
+
+    // Gọi hàm chạy ngay
+    taiDanhSach();
+</script>
+
+</body>
+</html>
