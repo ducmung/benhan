@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Bệnh Án Điện Tử</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; background-color: #f4f6f9; padding: 20px; }
+        .container { background: #fff; padding: 30px; border-radius: 10px; max-width: 800px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .form-label { font-weight: bold; margin-top: 10px; }
+        .img-preview { width: 100px; height: 133px; object-fit: cover; border: 1px dashed #ccc; margin-top: 5px; display: none; cursor: pointer; }
+        .section-title { font-size: 18px; font-weight: bold; color: #d32f2f; border-bottom: 2px solid #d32f2f; margin-top: 30px; padding-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 class="text-center fw-bold text-primary">HỒ SƠ BỆNH ÁN</h2>
+    
+    <form id="benhAnForm">
+        <!-- Thông tin hành chính -->
+        <div class="row">
+            <div class="col-md-6"><label class="form-label">NGÀY THÁNG :</label><input type="date" id="ngay1" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">HỌ TÊN :</label><input type="text" id="hoTen" class="form-control" required></div>
+            <div class="col-md-6"><label class="form-label">NĂM SINH :</label><input type="text" id="namSinh" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">ĐT :</label><input type="text" id="dienThoai" class="form-control"></div>
+            <div class="col-md-12"><label class="form-label">ĐỊA CHỈ :</label><input type="text" id="diaChi" class="form-control"></div>
+        </div>
+
+        <!-- Khám Lần 1 -->
+        <label class="form-label">TRIỆU CHỨNG LÂM SÀNG :</label>
+        <textarea id="trieuChung" class="form-control" rows="3"></textarea>
+
+        <label class="form-label text-danger">LƯỠI : (ấn vào để chèn ảnh kích thước 6x8mm)</label>
+        <input type="file" id="anhLuoi1" class="form-control" accept="image/*" onchange="previewImg(this, 'preview1')">
+        <img id="preview1" class="img-preview" title="Ảnh lưỡi 1">
+
+        <label class="form-label">CÁCH TRỊ :</label>
+        <input type="text" id="cachTri" class="form-control">
+
+        <label class="form-label">ĐƠN THUỐC :</label>
+        <textarea id="donThuoc" class="form-control" rows="4"></textarea>
+
+        <div class="row">
+            <div class="col-md-6"><label class="form-label">SỐ THANG :</label><input type="text" id="soThang1" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label">THÀNH TIỀN :</label><input type="text" id="thanhTien1" class="form-control"></div>
+        </div>
+
+        <!-- Khám Lần 2 -->
+        <div class="section-title">TÁI KHÁM</div>
+        <label class="form-label">LẤY LẦN 2 :</label>
+        <textarea id="layLan2" class="form-control" rows="2"></textarea>
+        
+        <label class="form-label">NGÀY THÁNG :</label>
+        <input type="date" id="ngay2" class="form-control">
+
+        <label class="form-label text-danger">LƯỠI : (ấn vào để chèn ảnh kích thước 6x8mm)</label>
+        <input type="file" id="anhLuoi2" class="form-control" accept="image/*" onchange="previewImg(this, 'preview2')">
+        <img id="preview2" class="img-preview" title="Ảnh lưỡi 2">
+
+        <label class="form-label">GIA GIẢM :</label>
+        <textarea id="giaGiam" class="form-control" rows="2"></textarea>
+
+        <label class="form-label">Số Thang / thành tiền :</label>
+        <input type="text" id="soThangTien2" class="form-control">
+
+        <!-- Nút Lưu -->
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-success btn-lg w-100" id="btnLuu">LƯU BỆNH ÁN LÊN SERVER</button>
+        </div>
+    </form>
+</div>
+
+<!-- THƯ VIỆN FIREBASE -->
+<script type="module">
+    // 1. Import Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+    // =========================================================
+    // 2. THAY THẾ ĐOẠN CONFIG CỦA BẠN VÀO ĐÂY (Lấy từ Bước 4 Phần 1)
+    const firebaseConfig = {
+        // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDEZC9nQNR0jXa24rMXThX9RGoQeVhPd3k",
+  authDomain: "quanlybenhan-7c92f.firebaseapp.com",
+  projectId: "quanlybenhan-7c92f",
+  storageBucket: "quanlybenhan-7c92f.firebasestorage.app",
+  messagingSenderId: "779969332650",
+  appId: "1:779969332650:web:77a15b8bc012001ae457d3",
+  measurementId: "G-33ECM18Q9R"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+    };
+    // =========================================================
+
+    // 3. Khởi tạo Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    // Hàm upload ảnh lên Firebase Storage và lấy Link ảnh
+    async function uploadImage(file, pathName) {
+        if (!file) return "";
+        const storageRef = ref(storage, 'anh_luoi/' + Date.now() + '_' + pathName);
+        await uploadBytes(storageRef, file);
+        return await getDownloadURL(storageRef); // Trả về link ảnh online
+    }
+
+    // Xử lý sự kiện bấm LƯU
+    document.getElementById("benhAnForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById("btnLuu");
+        btn.innerText = "ĐANG LƯU DỮ LIỆU... VUI LÒNG ĐỢI";
+        btn.disabled = true;
+
+        try {
+            // Lấy file ảnh
+            const file1 = document.getElementById("anhLuoi1").files[0];
+            const file2 = document.getElementById("anhLuoi2").files[0];
+
+            // Upload ảnh và lấy link online
+            const urlLuoi1 = await uploadImage(file1, 'luoi1.jpg');
+            const urlLuoi2 = await uploadImage(file2, 'luoi2.jpg');
+
+            // Đẩy tất cả dữ liệu chữ + link ảnh vào Database (Firestore)
+            await addDoc(collection(db, "BenhAn"), {
+                ngay1: document.getElementById("ngay1").value,
+                hoTen: document.getElementById("hoTen").value,
+                namSinh: document.getElementById("namSinh").value,
+                dienThoai: document.getElementById("dienThoai").value,
+                diaChi: document.getElementById("diaChi").value,
+                trieuChung: document.getElementById("trieuChung").value,
+                cachTri: document.getElementById("cachTri").value,
+                donThuoc: document.getElementById("donThuoc").value,
+                soThang1: document.getElementById("soThang1").value,
+                thanhTien1: document.getElementById("thanhTien1").value,
+                anhLuoi1: urlLuoi1, // Link ảnh lưu trên cloud
+
+                layLan2: document.getElementById("layLan2").value,
+                ngay2: document.getElementById("ngay2").value,
+                giaGiam: document.getElementById("giaGiam").value,
+                soThangTien2: document.getElementById("soThangTien2").value,
+                anhLuoi2: urlLuoi2,
+                
+                taoLuc: new Date() // Lưu thời gian tạo
+            });
+
+            alert("✅ Đã lưu bệnh án thành công lên Server!");
+            document.getElementById("benhAnForm").reset();
+            document.querySelectorAll('.img-preview').forEach(img => img.style.display = 'none');
+
+        } catch (error) {
+            console.error("Lỗi: ", error);
+            alert("❌ Lỗi khi lưu: " + error.message);
+        } finally {
+            btn.innerText = "LƯU BỆNH ÁN LÊN SERVER";
+            btn.disabled = false;
+        }
+    });
+</script>
+
+<script>
+    // Preview ảnh ngoài giao diện HTML
+    function previewImg(input, imgId) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = document.getElementById(imgId);
+                img.src = e.target.result;
+                img.style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+</body>
+</html>
