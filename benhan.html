@@ -78,14 +78,13 @@
                     <div class="col-md-4"><label class="fw-bold">NGÀY THÁNG:</label><input type="date" id="ngayLap" class="form-control"></div>
                     <div class="col-md-8"><label class="fw-bold">HỌ TÊN:</label><input type="text" id="hoTen" class="form-control text-uppercase"></div>
                     <div class="col-md-4"><label class="fw-bold">NĂM SINH:</label><input type="text" id="namSinh" class="form-control"></div>
-                    <div class="col-md-4"><label class="fw-bold">ĐIỆN THOẠI (ĐT):</label><input type="text" id="dienThoai" class="form-control"></div>
+                    <div class="col-md-4"><label class="fw-bold">ĐT:</label><input type="text" id="dienThoai" class="form-control"></div>
                     <div class="col-md-12"><label class="fw-bold">ĐỊA CHỈ:</label><input type="text" id="diaChi" class="form-control"></div>
                 </div>
 
-                <!-- CÁC LẦN KHÁM (1 -> 16) DƯỚI DẠNG ACCORDION -->
-                <div class="section-title">CHI TIẾT ĐIỀU TRỊ (TỐI ĐA 16 LẦN)</div>
-                <div class="accordion" id="accordionVisits">
-                    <!-- Javascript sẽ sinh mã cho 16 lần khám ở đây -->
+                <!-- CÁC LẦN KHÁM (1 -> 20) DƯỚI DẠNG ACCORDION -->
+                <div class="accordion mt-4" id="accordionVisits">
+                    <!-- Javascript sẽ sinh mã cho 20 lần khám ở đây -->
                 </div>
             </div>
         </div>
@@ -94,13 +93,12 @@
 
 <script>
     // ==========================================
-    // CẤU HÌNH GOOGLE DRIVE API (ĐÃ CẬP NHẬT QUYỀN VÀ BỘ NHỚ)
+    // CẤU HÌNH GOOGLE DRIVE API
     // ==========================================
     const API_KEY = 'AIzaSyC-nbFPgRmzjxL1XahJNm56XjHWW1OjALE';
     const CLIENT_ID = '153127793994-13p4ic6g8die83meu4u9cp2vvjojfe6k.apps.googleusercontent.com';
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
     
-    // Nâng cấp quyền: Truy cập toàn bộ Drive để tìm được cả file cũ
     const SCOPES = 'https://www.googleapis.com/auth/drive';
 
     let tokenClient;
@@ -109,7 +107,7 @@
     function gapiLoaded() {
         gapi.load('client', async () => {
             await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
-            kiemTraTokenLuuTru(); // Kiểm tra xem trước đó đã đăng nhập chưa
+            kiemTraTokenLuuTru();
         });
     }
 
@@ -119,7 +117,6 @@
             scope: SCOPES,
             callback: (tokenResponse) => {
                 accessToken = tokenResponse.access_token;
-                // Lưu token và thời gian hết hạn (3500 giây) vào LocalStorage
                 const expiryTime = new Date().getTime() + 3500 * 1000;
                 localStorage.setItem('gdrive_token', accessToken);
                 localStorage.setItem('gdrive_token_expiry', expiryTime);
@@ -133,7 +130,6 @@
         }
     }
 
-    // Tự động lấy token cũ nếu chưa hết hạn 1 tiếng
     function kiemTraTokenLuuTru() {
         const token = localStorage.getItem('gdrive_token');
         const expiry = localStorage.getItem('gdrive_token_expiry');
@@ -143,7 +139,6 @@
             gapi.client.setToken({ access_token: accessToken });
             hienThiTrangThaiKetNoi();
         } else {
-            // Token đã hết hạn hoặc chưa đăng nhập
             localStorage.removeItem('gdrive_token');
             localStorage.removeItem('gdrive_token_expiry');
         }
@@ -195,16 +190,13 @@
         document.getElementById('patientList').innerHTML = `<div class="text-primary fw-bold text-center">Đang quét toàn bộ Google Drive...</div>`;
 
         try {
-            // Nới lỏng bộ lọc: Tìm tất cả các file chứa tên, không phân biệt word cũ hay word mới
             const res = await gapi.client.drive.files.list({
                 q: `name contains '${query}' and trashed = false`,
                 fields: 'files(id, name, webViewLink, mimeType)',
                 spaces: 'drive'
             });
             
-            // Chỉ lọc lại những file có đuôi liên quan đến văn bản (doc, docx, txt...)
             const files = res.result.files.filter(f => f.mimeType.includes('document') || f.mimeType.includes('msword'));
-            
             const listDiv = document.getElementById('patientList');
             listDiv.innerHTML = `<div class="text-success fw-bold mb-2">Đã tìm thấy ${files.length} file trên Drive:</div>`;
             
@@ -220,7 +212,7 @@
             });
         } catch (err) {
             if(err.status === 401 || err.status === 403) {
-                alert("Phiên đăng nhập đã hết hạn hoặc bạn chưa cấp quyền truy cập Toàn Bộ Drive. Hãy F5 tải lại trang và kết nối lại.");
+                alert("Phiên đăng nhập đã hết hạn hoặc bạn chưa cấp quyền. Hãy F5 tải lại trang và kết nối lại.");
                 localStorage.removeItem('gdrive_token');
             } else {
                 alert("Lỗi khi tìm trên Drive: " + err.message);
@@ -232,9 +224,9 @@
     // CẤU TRÚC GIAO DIỆN & QUẢN LÝ LOCAL
     // ==========================================
     const accordionContainer = document.getElementById('accordionVisits');
-    for (let i = 1; i <= 16; i++) {
+    for (let i = 1; i <= 20; i++) {
         const isFirst = (i === 1);
-        const title = isFirst ? `LẦN 1 (Khám Đầu)` : `LẦN ${i} (Tái Khám)`;
+        const title = isFirst ? `LẦN ĐẦU` : `LẦN ${i}`;
         
         let fieldsHTML = isFirst ? `
                 <div class="mb-2"><label class="fw-bold">TRIỆU CHỨNG LÂM SÀNG:</label><textarea id="trieuChung_1" class="form-control" rows="2"></textarea></div>
@@ -243,7 +235,7 @@
                 <div class="mb-2"><label class="fw-bold">ĐƠN THUỐC:</label><textarea id="donThuoc_1" class="form-control" rows="3"></textarea></div>
                 <div class="row"><div class="col-md-6"><label class="fw-bold">SỐ THANG:</label><input type="text" id="soThang_1" class="form-control"></div><div class="col-md-6"><label class="fw-bold">THÀNH TIỀN:</label><input type="text" id="thanhTien_1" class="form-control"></div></div>
             ` : `
-                <div class="row mb-2"><div class="col-md-8"><label class="fw-bold">LẤY LẦN ${i}:</label><input type="text" id="layLan_${i}" class="form-control" placeholder="..."></div><div class="col-md-4"><label class="fw-bold">NGÀY THÁNG:</label><input type="date" id="ngay_${i}" class="form-control"></div></div>
+                <div class="row mb-2"><div class="col-md-8"><label class="fw-bold">LẤY LẦN ${i}:</label><input type="text" id="layLan_${i}" class="form-control"></div><div class="col-md-4"><label class="fw-bold">NGÀY THÁNG:</label><input type="date" id="ngay_${i}" class="form-control"></div></div>
                 <div class="mb-2 bg-white p-2 border rounded"><label class="fw-bold text-danger">LƯỠI : ( ấn vào để chèn ảnh kích thước 6x8mm )</label><input type="file" id="anhFile_${i}" class="form-control" accept="image/*" onchange="previewImg(this, ${i})"><input type="hidden" id="anhBase64_${i}"><img id="preview_${i}" class="preview-img"></div>
                 <div class="mb-2"><label class="fw-bold">GIA GIẢM:</label><textarea id="giaGiam_${i}" class="form-control" rows="2"></textarea></div>
                 <div class="mb-2"><label class="fw-bold">Số Thang / thành tiền:</label><input type="text" id="soThangTien_${i}" class="form-control"></div>
@@ -277,7 +269,7 @@
     let patients = [];
 
     async function taiDanhSach() {
-        patients = (await localforage.getItem('DanhSachBenhNhan_V3')) || [];
+        patients = (await localforage.getItem('DanhSachBenhNhan_V4')) || [];
         timKiemLocal();
     }
 
@@ -314,7 +306,7 @@
             visits: []
         };
 
-        for (let i = 1; i <= 16; i++) {
+        for (let i = 1; i <= 20; i++) {
             let visit = { lan: i };
             if (i === 1) {
                 visit.trieuChung = document.getElementById('trieuChung_1').value; visit.anhLuoi = document.getElementById('anhBase64_1').value;
@@ -331,7 +323,7 @@
         const existingIndex = patients.findIndex(p => p.id === id);
         if(existingIndex >= 0) { patients[existingIndex] = patientData; } else { patients.unshift(patientData); }
 
-        await localforage.setItem('DanhSachBenhNhan_V3', patients);
+        await localforage.setItem('DanhSachBenhNhan_V4', patients);
         document.getElementById('patientId').value = id;
         taiDanhSach();
         alert('✅ Đã lưu vào bộ nhớ tạm để có thể ghi tiếp lần sau!');
@@ -348,6 +340,7 @@
 
         p.visits.forEach((v, idx) => {
             let i = idx + 1;
+            if (i > 20) return; // Bảo vệ an toàn nếu dữ liệu cũ có hơn 20 lần
             if (i === 1) {
                 document.getElementById('trieuChung_1').value = v.trieuChung || ''; document.getElementById('cachTri_1').value = v.cachTri || '';
                 document.getElementById('donThuoc_1').value = v.donThuoc || ''; document.getElementById('soThang_1').value = v.soThang || ''; document.getElementById('thanhTien_1').value = v.thanhTien || '';
@@ -394,7 +387,7 @@
             new Paragraph({ text: "\n" })
         ];
 
-        for (let i = 1; i <= 16; i++) {
+        for (let i = 1; i <= 20; i++) {
             if (i === 1) {
                 const trieuChung = document.getElementById('trieuChung_1').value;
                 if(!trieuChung && !document.getElementById('anhBase64_1').value && !document.getElementById('donThuoc_1').value) continue;
@@ -448,7 +441,15 @@
         const doc = new Document({ sections: [{ properties: {}, children: docChildren }] });
 
         Packer.toBlob(doc).then(async (blob) => {
-            const tenFile = `BenhAn_${hoTen.replace(/\s+/g, '_')}.docx`;
+            // Thay đổi theo yêu cầu: Bỏ chữ BenhAn_ và dấu gạch chân
+            let tenFile;
+            const tenKhachHang = document.getElementById('hoTen').value.trim();
+            if (tenKhachHang) {
+                tenFile = `${tenKhachHang.toUpperCase()}.docx`;
+            } else {
+                tenFile = `HOSO_CHUA_CO_TEN.docx`;
+            }
+
             saveAs(blob, tenFile); 
             
             if(accessToken) {
