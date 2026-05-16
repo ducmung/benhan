@@ -38,7 +38,7 @@
         <!-- CỘT TRÁI: TÌM KIẾM & DANH SÁCH BỆNH NHÂN -->
         <div class="col-md-3 sidebar shadow-sm">
             <h5 class="text-primary fw-bold mb-3">TÍCH HỢP GOOGLE DRIVE</h5>
-            <button id="authBtn" class="btn btn-outline-primary w-100 mb-2 fw-bold" onclick="handleAuthClick()">Bật Kết Nối Google Drive</button>
+            <button id="authBtn" class="btn btn-outline-primary w-100 mb-2 fw-bold" onclick="handleAuthClick()">Đang tải hệ thống...</button>
             <div id="driveStatus" class="drive-status text-danger text-center mb-4">❌ Chưa kết nối Drive</div>
 
             <hr>
@@ -76,9 +76,9 @@
                 <div class="section-title">THÔNG TIN HÀNH CHÍNH</div>
                 <div class="row g-3 mb-4">
                     <div class="col-md-4"><label class="fw-bold">NGÀY THÁNG:</label><input type="date" id="ngayLap" class="form-control"></div>
-                    <div class="col-md-8"><label class="fw-bold">HỌ TÊN:</label><input type="text" id="hoTen" class="form-control text-uppercase" placeholder="Nguyễn Văn A"></div>
+                    <div class="col-md-8"><label class="fw-bold">HỌ TÊN:</label><input type="text" id="hoTen" class="form-control text-uppercase"></div>
                     <div class="col-md-4"><label class="fw-bold">NĂM SINH:</label><input type="text" id="namSinh" class="form-control"></div>
-                    <div class="col-md-4"><label class="fw-bold">ĐIỆN THOẠI:</label><input type="text" id="dienThoai" class="form-control"></div>
+                    <div class="col-md-4"><label class="fw-bold">ĐIỆN THOẠI (ĐT):</label><input type="text" id="dienThoai" class="form-control"></div>
                     <div class="col-md-12"><label class="fw-bold">ĐỊA CHỈ:</label><input type="text" id="diaChi" class="form-control"></div>
                 </div>
 
@@ -94,12 +94,14 @@
 
 <script>
     // ==========================================
-    // CẤU HÌNH GOOGLE DRIVE API (CỦA BẠN)
+    // CẤU HÌNH GOOGLE DRIVE API (ĐÃ CẬP NHẬT QUYỀN VÀ BỘ NHỚ)
     // ==========================================
     const API_KEY = 'AIzaSyC-nbFPgRmzjxL1XahJNm56XjHWW1OjALE';
     const CLIENT_ID = '153127793994-13p4ic6g8die83meu4u9cp2vvjojfe6k.apps.googleusercontent.com';
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-    const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+    
+    // Nâng cấp quyền: Truy cập toàn bộ Drive để tìm được cả file cũ
+    const SCOPES = 'https://www.googleapis.com/auth/drive';
 
     let tokenClient;
     let accessToken = null;
@@ -107,6 +109,7 @@
     function gapiLoaded() {
         gapi.load('client', async () => {
             await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
+            kiemTraTokenLuuTru(); // Kiểm tra xem trước đó đã đăng nhập chưa
         });
     }
 
@@ -116,12 +119,41 @@
             scope: SCOPES,
             callback: (tokenResponse) => {
                 accessToken = tokenResponse.access_token;
-                document.getElementById('driveStatus').innerText = "✅ Đã kết nối Google Drive";
-                document.getElementById('driveStatus').className = "drive-status text-success text-center mb-4";
-                document.getElementById('authBtn').innerText = "Tài khoản đã kết nối";
-                document.getElementById('authBtn').disabled = true;
+                // Lưu token và thời gian hết hạn (3500 giây) vào LocalStorage
+                const expiryTime = new Date().getTime() + 3500 * 1000;
+                localStorage.setItem('gdrive_token', accessToken);
+                localStorage.setItem('gdrive_token_expiry', expiryTime);
+                hienThiTrangThaiKetNoi();
             },
         });
+        
+        if(!accessToken) {
+            document.getElementById('authBtn').innerText = "Bật Kết Nối Google Drive";
+            document.getElementById('authBtn').disabled = false;
+        }
+    }
+
+    // Tự động lấy token cũ nếu chưa hết hạn 1 tiếng
+    function kiemTraTokenLuuTru() {
+        const token = localStorage.getItem('gdrive_token');
+        const expiry = localStorage.getItem('gdrive_token_expiry');
+        
+        if (token && expiry && new Date().getTime() < parseInt(expiry)) {
+            accessToken = token;
+            gapi.client.setToken({ access_token: accessToken });
+            hienThiTrangThaiKetNoi();
+        } else {
+            // Token đã hết hạn hoặc chưa đăng nhập
+            localStorage.removeItem('gdrive_token');
+            localStorage.removeItem('gdrive_token_expiry');
+        }
+    }
+
+    function hienThiTrangThaiKetNoi() {
+        document.getElementById('driveStatus').innerText = "✅ Đã kết nối Google Drive";
+        document.getElementById('driveStatus').className = "drive-status text-success text-center mb-4";
+        document.getElementById('authBtn').innerText = "Tài khoản đã kết nối";
+        document.getElementById('authBtn').disabled = true;
     }
 
     function handleAuthClick() {
@@ -129,7 +161,7 @@
     }
 
     async function uploadToDrive(blob, fileName) {
-        if (!accessToken) return; // Nếu chưa đăng nhập thì bỏ qua bước tải lên Drive
+        if (!accessToken) return;
         
         const metadata = { name: fileName, mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
         const form = new FormData();
@@ -142,11 +174,16 @@
                 headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
                 body: form
             });
-            const resJson = await res.json();
+            if(res.status === 401) throw new Error("Hết phiên đăng nhập");
             alert("✅ Bản sao lưu Word đã được đẩy tự động lên Google Drive!");
         } catch(e) {
             console.error("Lỗi Drive:", e);
-            alert("❌ Đã lưu máy tính nhưng đẩy lên Drive thất bại.");
+            if(e.message === "Hết phiên đăng nhập") {
+                alert("Phiên đăng nhập đã hết hạn (quá 1 tiếng). Vui lòng tải lại trang và bấm Bật Kết Nối.");
+                localStorage.removeItem('gdrive_token');
+            } else {
+                alert("❌ Đã lưu máy tính nhưng đẩy lên Drive thất bại.");
+            }
         }
     }
 
@@ -155,14 +192,19 @@
         const query = document.getElementById('searchBox').value.trim();
         if(!query) { alert("Vui lòng nhập tên để tìm!"); return; }
 
+        document.getElementById('patientList').innerHTML = `<div class="text-primary fw-bold text-center">Đang quét toàn bộ Google Drive...</div>`;
+
         try {
+            // Nới lỏng bộ lọc: Tìm tất cả các file chứa tên, không phân biệt word cũ hay word mới
             const res = await gapi.client.drive.files.list({
-                q: `name contains '${query}' and mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document' and trashed = false`,
-                fields: 'files(id, name, webViewLink)',
+                q: `name contains '${query}' and trashed = false`,
+                fields: 'files(id, name, webViewLink, mimeType)',
                 spaces: 'drive'
             });
             
-            const files = res.result.files;
+            // Chỉ lọc lại những file có đuôi liên quan đến văn bản (doc, docx, txt...)
+            const files = res.result.files.filter(f => f.mimeType.includes('document') || f.mimeType.includes('msword'));
+            
             const listDiv = document.getElementById('patientList');
             listDiv.innerHTML = `<div class="text-success fw-bold mb-2">Đã tìm thấy ${files.length} file trên Drive:</div>`;
             
@@ -172,12 +214,17 @@
                 listDiv.innerHTML += `
                     <div class="patient-item border-start border-4 border-success rounded mb-2 shadow-sm" onclick="window.open('${file.webViewLink}', '_blank')">
                         <strong class="text-success">📄 ${file.name}</strong><br>
-                        <small class="text-muted">Bấm để mở file trên Google Docs</small>
+                        <small class="text-muted">Bấm để xem/sửa trực tiếp trên Drive</small>
                     </div>
                 `;
             });
         } catch (err) {
-            alert("Lỗi khi tìm trên Drive: " + err.message);
+            if(err.status === 401 || err.status === 403) {
+                alert("Phiên đăng nhập đã hết hạn hoặc bạn chưa cấp quyền truy cập Toàn Bộ Drive. Hãy F5 tải lại trang và kết nối lại.");
+                localStorage.removeItem('gdrive_token');
+            } else {
+                alert("Lỗi khi tìm trên Drive: " + err.message);
+            }
         }
     }
 
@@ -191,13 +238,13 @@
         
         let fieldsHTML = isFirst ? `
                 <div class="mb-2"><label class="fw-bold">TRIỆU CHỨNG LÂM SÀNG:</label><textarea id="trieuChung_1" class="form-control" rows="2"></textarea></div>
-                <div class="mb-2 bg-white p-2 border rounded"><label class="fw-bold text-danger">LƯỠI (ấn vào chèn ảnh 8x8cm):</label><input type="file" id="anhFile_1" class="form-control" accept="image/*" onchange="previewImg(this, 1)"><input type="hidden" id="anhBase64_1"><img id="preview_1" class="preview-img"></div>
+                <div class="mb-2 bg-white p-2 border rounded"><label class="fw-bold text-danger">LƯỠI : ( ấn vào để chèn ảnh kích thước 6x8mm )</label><input type="file" id="anhFile_1" class="form-control" accept="image/*" onchange="previewImg(this, 1)"><input type="hidden" id="anhBase64_1"><img id="preview_1" class="preview-img"></div>
                 <div class="mb-2"><label class="fw-bold">CÁCH TRỊ:</label><input type="text" id="cachTri_1" class="form-control"></div>
                 <div class="mb-2"><label class="fw-bold">ĐƠN THUỐC:</label><textarea id="donThuoc_1" class="form-control" rows="3"></textarea></div>
                 <div class="row"><div class="col-md-6"><label class="fw-bold">SỐ THANG:</label><input type="text" id="soThang_1" class="form-control"></div><div class="col-md-6"><label class="fw-bold">THÀNH TIỀN:</label><input type="text" id="thanhTien_1" class="form-control"></div></div>
             ` : `
                 <div class="row mb-2"><div class="col-md-8"><label class="fw-bold">LẤY LẦN ${i}:</label><input type="text" id="layLan_${i}" class="form-control" placeholder="..."></div><div class="col-md-4"><label class="fw-bold">NGÀY THÁNG:</label><input type="date" id="ngay_${i}" class="form-control"></div></div>
-                <div class="mb-2 bg-white p-2 border rounded"><label class="fw-bold text-danger">LƯỠI (ấn vào chèn ảnh 8x8cm):</label><input type="file" id="anhFile_${i}" class="form-control" accept="image/*" onchange="previewImg(this, ${i})"><input type="hidden" id="anhBase64_${i}"><img id="preview_${i}" class="preview-img"></div>
+                <div class="mb-2 bg-white p-2 border rounded"><label class="fw-bold text-danger">LƯỠI : ( ấn vào để chèn ảnh kích thước 6x8mm )</label><input type="file" id="anhFile_${i}" class="form-control" accept="image/*" onchange="previewImg(this, ${i})"><input type="hidden" id="anhBase64_${i}"><img id="preview_${i}" class="preview-img"></div>
                 <div class="mb-2"><label class="fw-bold">GIA GIẢM:</label><textarea id="giaGiam_${i}" class="form-control" rows="2"></textarea></div>
                 <div class="mb-2"><label class="fw-bold">Số Thang / thành tiền:</label><input type="text" id="soThangTien_${i}" class="form-control"></div>
             `;
@@ -287,7 +334,7 @@
         await localforage.setItem('DanhSachBenhNhan_V3', patients);
         document.getElementById('patientId').value = id;
         taiDanhSach();
-        alert('✅ Đã lưu để có thể ghi tiếp lần sau!');
+        alert('✅ Đã lưu vào bộ nhớ tạm để có thể ghi tiếp lần sau!');
     }
 
     function taiBenhAn(id) {
@@ -402,9 +449,8 @@
 
         Packer.toBlob(doc).then(async (blob) => {
             const tenFile = `BenhAn_${hoTen.replace(/\s+/g, '_')}.docx`;
-            saveAs(blob, tenFile); // Lưu xuống máy tính
+            saveAs(blob, tenFile); 
             
-            // Đẩy lên Google Drive nếu đã kết nối
             if(accessToken) {
                 await uploadToDrive(blob, tenFile);
             } else {
