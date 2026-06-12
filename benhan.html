@@ -3,463 +3,396 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phòng Khám Đức Mừng - Quản Lý Bệnh Án</title>
+    <title>Thiệt Chẩn AI - Trợ Lý Đông Y</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Thư viện hỗ trợ: FileSaver, Docx (Xuất Word) và LocalForage (Lưu Database) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/docx@8.2.2/build/index.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-    
-    <!-- Thư viện Google Drive API -->
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/genai": "https://esm.run/@google/genai"
+        }
+      }
+    </script>
 
     <style>
-        body { background-color: #f0f2f5; font-family: 'Times New Roman', Times, serif; }
-        .sidebar { background: #fff; height: 100vh; overflow-y: auto; border-right: 1px solid #ddd; padding: 20px; }
-        .main-content { height: 100vh; overflow-y: auto; padding: 20px; }
-        .patient-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #eee; transition: 0.2s; }
-        .patient-item:hover { background-color: #e9ecef; }
-        .form-section { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;}
-        .section-title { color: #0d6efd; font-weight: bold; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; margin-bottom: 15px; text-transform: uppercase; }
-        .preview-img { width: 150px; height: 150px; object-fit: cover; border: 1px dashed #ccc; margin-top: 5px; display: none; }
-        .accordion-button { font-weight: bold; color: #198754; }
-        .drive-status { font-size: 14px; font-weight: bold; margin-top: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .bg-medical { background: linear-gradient(135deg, #0f4c5c 0%, #1d3557 100%); }
+        .btn-primary { background-color: #0f4c5c; }
+        .btn-primary:hover { background-color: #146277; }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
 
-<div class="container-fluid">
-    <div class="row">
-        <!-- CỘT TRÁI: TÌM KIẾM & DANH SÁCH BỆNH NHÂN -->
-        <div class="col-md-3 sidebar shadow-sm">
-            <h5 class="text-primary fw-bold mb-3">TÍCH HỢP GOOGLE DRIVE</h5>
-            <button id="authBtn" class="btn btn-outline-primary w-100 mb-2 fw-bold" onclick="handleAuthClick()">Đang tải hệ thống...</button>
-            <div id="driveStatus" class="drive-status text-danger text-center mb-4">❌ Chưa kết nối Drive</div>
-
-            <hr>
-            
-            <h5 class="text-primary fw-bold mb-3">DANH SÁCH BỆNH NHÂN</h5>
-            <button class="btn btn-success w-100 mb-3 fw-bold" onclick="taoMoi()">+ THÊM BỆNH ÁN MỚI</button>
-            
-            <div class="input-group mb-3">
-                <input type="text" id="searchBox" class="form-control border-primary" placeholder="🔍 Tìm tên..." onkeyup="timKiemLocal()">
-                <button class="btn btn-primary" onclick="timKiemTrenDrive()">Tìm trên Drive</button>
+    <header class="bg-medical text-white py-6 px-4 shadow-md">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                <div class="bg-white p-2 rounded-full text-[#0f4c5c] text-2xl shadow">
+                    <i class="fa-solid fa-mortar-pestle"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">Thiệt Chẩn AI</h1>
+                    <p class="text-xs text-slate-200">Hệ Thống Chẩn Đoán Lưỡi & Đề Xuất Cổ Phương Tự Động</p>
+                </div>
             </div>
-
-            <div id="patientList">
-                <!-- Danh sách sẽ được tạo tự động qua JS -->
-            </div>
-        </div>
-
-        <!-- CỘT PHẢI: KHUNG NHẬP LIỆU BỆNH ÁN -->
-        <div class="col-md-9 main-content">
-            <div class="form-section">
-                <!-- TIÊU ĐỀ PHÒNG KHÁM -->
-                <div class="text-center mb-4 border-bottom pb-3">
-                    <h2 class="text-danger fw-bold m-0 text-uppercase" style="font-size: 28px;">PHÒNG KHÁM ĐÔNG Y ĐỨC MỪNG</h2>
-                    <h3 class="text-primary fw-bold mt-2">HỒ SƠ BỆNH ÁN</h3>
-                </div>
-
-                <div class="d-flex justify-content-end mb-4 gap-2">
-                    <button class="btn btn-primary px-4 fw-bold" onclick="luuBenhAn()">💾 Lưu Tạm & Ghi Tiếp</button>
-                    <button class="btn btn-warning px-4 fw-bold" onclick="xuatWord()">📄 Xuất WORD & Lưu lên Drive</button>
-                </div>
-
-                <input type="hidden" id="patientId">
-
-                <!-- THÔNG TIN HÀNH CHÍNH -->
-                <div class="section-title">THÔNG TIN HÀNH CHÍNH</div>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-4"><label class="fw-bold">NGÀY THÁNG:</label><input type="date" id="ngayLap" class="form-control"></div>
-                    <div class="col-md-8"><label class="fw-bold">HỌ TÊN:</label><input type="text" id="hoTen" class="form-control text-uppercase"></div>
-                    <div class="col-md-4"><label class="fw-bold">NĂM SINH:</label><input type="text" id="namSinh" class="form-control"></div>
-                    <div class="col-md-4"><label class="fw-bold">ĐT:</label><input type="text" id="dienThoai" class="form-control"></div>
-                    <div class="col-md-12"><label class="fw-bold">ĐỊA CHỈ:</label><input type="text" id="diaChi" class="form-control"></div>
-                </div>
-
-                <!-- CÁC LẦN KHÁM (1 -> 20) DƯỚI DẠNG ACCORDION -->
-                <div class="accordion mt-4" id="accordionVisits">
-                    <!-- Javascript sẽ sinh mã cho 20 lần khám ở đây -->
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/10 px-4 py-2 rounded-lg border border-white/20 text-xs text-center md:text-right">
+                    <span class="text-orange-300 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Khuyến cáo:</span> 
+                    Kết quả mang tính tham khảo học thuật.
                 </div>
             </div>
         </div>
-    </div>
-</div>
+    </header>
 
-<script>
-    // ==========================================
-    // CẤU HÌNH GOOGLE DRIVE API
-    // ==========================================
-    const API_KEY = 'AIzaSyC-nbFPgRmzjxL1XahJNm56XjHWW1OjALE';
-    const CLIENT_ID = '153127793994-13p4ic6g8die83meu4u9cp2vvjojfe6k.apps.googleusercontent.com';
-    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-    
-    const SCOPES = 'https://www.googleapis.com/auth/drive';
-
-    let tokenClient;
-    let accessToken = null;
-
-    function gapiLoaded() {
-        gapi.load('client', async () => {
-            await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
-            kiemTraTokenLuuTru();
-        });
-    }
-
-    function gisLoaded() {
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: SCOPES,
-            callback: (tokenResponse) => {
-                accessToken = tokenResponse.access_token;
-                const expiryTime = new Date().getTime() + 3500 * 1000;
-                localStorage.setItem('gdrive_token', accessToken);
-                localStorage.setItem('gdrive_token_expiry', expiryTime);
-                hienThiTrangThaiKetNoi();
-            },
-        });
-        
-        if(!accessToken) {
-            document.getElementById('authBtn').innerText = "Bật Kết Nối Google Drive";
-            document.getElementById('authBtn').disabled = false;
-        }
-    }
-
-    function kiemTraTokenLuuTru() {
-        const token = localStorage.getItem('gdrive_token');
-        const expiry = localStorage.getItem('gdrive_token_expiry');
-        
-        if (token && expiry && new Date().getTime() < parseInt(expiry)) {
-            accessToken = token;
-            gapi.client.setToken({ access_token: accessToken });
-            hienThiTrangThaiKetNoi();
-        } else {
-            localStorage.removeItem('gdrive_token');
-            localStorage.removeItem('gdrive_token_expiry');
-        }
-    }
-
-    function hienThiTrangThaiKetNoi() {
-        document.getElementById('driveStatus').innerText = "✅ Đã kết nối Google Drive";
-        document.getElementById('driveStatus').className = "drive-status text-success text-center mb-4";
-        document.getElementById('authBtn').innerText = "Tài khoản đã kết nối";
-        document.getElementById('authBtn').disabled = true;
-    }
-
-    function handleAuthClick() {
-        tokenClient.requestAccessToken({prompt: 'consent'});
-    }
-
-    async function uploadToDrive(blob, fileName) {
-        if (!accessToken) return;
-        
-        const metadata = { name: fileName, mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
-        const form = new FormData();
-        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', blob);
-
-        try {
-            const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                method: 'POST',
-                headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
-                body: form
-            });
-            if(res.status === 401) throw new Error("Hết phiên đăng nhập");
-            alert("✅ Bản sao lưu Word đã được đẩy tự động lên Google Drive!");
-        } catch(e) {
-            console.error("Lỗi Drive:", e);
-            if(e.message === "Hết phiên đăng nhập") {
-                alert("Phiên đăng nhập đã hết hạn (quá 1 tiếng). Vui lòng tải lại trang và bấm Bật Kết Nối.");
-                localStorage.removeItem('gdrive_token');
-            } else {
-                alert("❌ Đã lưu máy tính nhưng đẩy lên Drive thất bại.");
-            }
-        }
-    }
-
-    async function timKiemTrenDrive() {
-        if (!accessToken) { alert("Vui lòng Bật kết nối Google Drive trước!"); return; }
-        const query = document.getElementById('searchBox').value.trim();
-        if(!query) { alert("Vui lòng nhập tên để tìm!"); return; }
-
-        document.getElementById('patientList').innerHTML = `<div class="text-primary fw-bold text-center">Đang quét toàn bộ Google Drive...</div>`;
-
-        try {
-            const res = await gapi.client.drive.files.list({
-                q: `name contains '${query}' and trashed = false`,
-                fields: 'files(id, name, webViewLink, mimeType)',
-                spaces: 'drive'
-            });
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            const files = res.result.files.filter(f => f.mimeType.includes('document') || f.mimeType.includes('msword'));
-            const listDiv = document.getElementById('patientList');
-            listDiv.innerHTML = `<div class="text-success fw-bold mb-2">Đã tìm thấy ${files.length} file trên Drive:</div>`;
-            
-            if(files.length === 0) { listDiv.innerHTML += `<i>Không thấy file nào khớp tên.</i>`; return; }
-            
-            files.forEach(file => {
-                listDiv.innerHTML += `
-                    <div class="patient-item border-start border-4 border-success rounded mb-2 shadow-sm" onclick="window.open('${file.webViewLink}', '_blank')">
-                        <strong class="text-success">📄 ${file.name}</strong><br>
-                        <small class="text-muted">Bấm để xem/sửa trực tiếp trên Drive</small>
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+                        <i class="fa-solid fa-camera mr-2 text-[#0f4c5c]"></i> Tải Ảnh Lưỡi Lên
+                    </h2>
+                    
+                    <div id="drop-zone" class="border-2 border-dashed border-slate-300 hover:border-[#0f4c5c] rounded-xl p-6 text-center cursor-pointer transition-colors bg-slate-50 group">
+                        <input type="file" id="file-input" accept="image/*" class="hidden">
+                        <div id="upload-prompt" class="space-y-3">
+                            <div class="text-4xl text-slate-400 group-hover:text-[#0f4c5c] transition-colors">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                            </div>
+                            <div class="text-sm font-medium text-slate-700">Kéo thả ảnh vào đây hoặc nhấp</div>
+                            <div class="text-xs text-slate-400">Chạy trực tiếp 100% trên trình duyệt</div>
+                        </div>
+                        
+                        <div id="preview-container" class="hidden relative mt-2">
+                            <img id="image-preview" src="#" alt="Ảnh lưỡi" class="mx-auto max-h-48 rounded-lg object-cover shadow-sm">
+                            <button id="remove-img-btn" class="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full shadow-md hover:bg-red-600 text-xs transition-transform hover:scale-110">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
                     </div>
-                `;
-            });
-        } catch (err) {
-            if(err.status === 401 || err.status === 403) {
-                alert("Phiên đăng nhập đã hết hạn hoặc bạn chưa cấp quyền. Hãy F5 tải lại trang và kết nối lại.");
-                localStorage.removeItem('gdrive_token');
-            } else {
-                alert("Lỗi khi tìm trên Drive: " + err.message);
-            }
-        }
-    }
 
-    // ==========================================
-    // CẤU TRÚC GIAO DIỆN & QUẢN LÝ LOCAL
-    // ==========================================
-    const accordionContainer = document.getElementById('accordionVisits');
-    for (let i = 1; i <= 20; i++) {
-        const isFirst = (i === 1);
-        const title = isFirst ? `LẦN ĐẦU` : `LẦN ${i}`;
-        
-        let fieldsHTML = isFirst ? `
-                <div class="mb-2"><label class="fw-bold">TRIỆU CHỨNG LÂM SÀNG:</label><textarea id="trieuChung_1" class="form-control" rows="2"></textarea></div>
-                <div class="mb-2 bg-white p-2 border rounded"><label class="fw-bold text-danger">LƯỠI : ( ấn vào để chèn ảnh kích thước 6x8mm )</label><input type="file" id="anhFile_1" class="form-control" accept="image/*" onchange="previewImg(this, 1)"><input type="hidden" id="anhBase64_1"><img id="preview_1" class="preview-img"></div>
-                <div class="mb-2"><label class="fw-bold">CÁCH TRỊ:</label><input type="text" id="cachTri_1" class="form-control"></div>
-                <div class="mb-2"><label class="fw-bold">ĐƠN THUỐC:</label><textarea id="donThuoc_1" class="form-control" rows="3"></textarea></div>
-                <div class="row"><div class="col-md-6"><label class="fw-bold">SỐ THANG:</label><input type="text" id="soThang_1" class="form-control"></div><div class="col-md-6"><label class="fw-bold">THÀNH TIỀN:</label><input type="text" id="thanhTien_1" class="form-control"></div></div>
-            ` : `
-                <div class="row mb-2"><div class="col-md-8"><label class="fw-bold">LẤY LẦN ${i}:</label><input type="text" id="layLan_${i}" class="form-control"></div><div class="col-md-4"><label class="fw-bold">NGÀY THÁNG:</label><input type="date" id="ngay_${i}" class="form-control"></div></div>
-                <div class="mb-2 bg-white p-2 border rounded"><label class="fw-bold text-danger">LƯỠI : ( ấn vào để chèn ảnh kích thước 6x8mm )</label><input type="file" id="anhFile_${i}" class="form-control" accept="image/*" onchange="previewImg(this, ${i})"><input type="hidden" id="anhBase64_${i}"><img id="preview_${i}" class="preview-img"></div>
-                <div class="mb-2"><label class="fw-bold">GIA GIẢM:</label><textarea id="giaGiam_${i}" class="form-control" rows="2"></textarea></div>
-                <div class="mb-2"><label class="fw-bold">Số Thang / thành tiền:</label><input type="text" id="soThangTien_${i}" class="form-control"></div>
-            `;
+                    <button id="diagnose-btn" class="w-full mt-5 py-3 px-4 rounded-xl text-white font-medium shadow-sm transition-all flex items-center justify-center space-x-2 btn-primary opacity-50 cursor-not-allowed" disabled>
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Bắt Đầu Phân Tích</span>
+                    </button>
+                </div>
 
-        const collapseClass = isFirst ? 'show' : '';
-        accordionContainer.innerHTML += `
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="heading_${i}">
-                    <button class="accordion-button ${isFirst ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_${i}">${title}</button>
-                </h2>
-                <div id="collapse_${i}" class="accordion-collapse collapse ${collapseClass}" data-bs-parent="#accordionVisits">
-                    <div class="accordion-body bg-light">${fieldsHTML}</div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-3">
+                    <h3 class="font-semibold text-slate-900 flex items-center text-sm">
+                        <i class="fa-solid fa-circle-info mr-2 text-amber-500"></i> Quy chuẩn ảnh chụp:
+                    </h3>
+                    <ul class="text-xs text-slate-600 space-y-2 list-disc pl-4">
+                        <li>Ánh sáng tự nhiên ban ngày hoặc ánh sáng trắng.</li>
+                        <li>Thè lưỡi tự nhiên, không cố gồng.</li>
+                        <li>Không ăn uống thực phẩm có màu trước khi chụp.</li>
+                    </ul>
                 </div>
             </div>
-        `;
-    }
 
-    function previewImg(input, index) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById(`preview_${index}`).src = e.target.result;
-                document.getElementById(`preview_${index}`).style.display = 'block';
-                document.getElementById(`anhBase64_${index}`).value = e.target.result; 
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    let patients = [];
-
-    async function taiDanhSach() {
-        patients = (await localforage.getItem('DanhSachBenhNhan_V4')) || [];
-        timKiemLocal();
-    }
-
-    function timKiemLocal() {
-        const keyword = document.getElementById('searchBox').value.toLowerCase();
-        const filtered = patients.filter(p => (p.hoTen && p.hoTen.toLowerCase().includes(keyword)));
-        const listDiv = document.getElementById('patientList');
-        listDiv.innerHTML = '';
-        filtered.forEach(p => {
-            listDiv.innerHTML += `
-                <div class="patient-item border-start border-4 border-primary rounded mb-2 shadow-sm" onclick="taiBenhAn('${p.id}')">
-                    <strong class="text-danger">${p.hoTen || 'Chưa có tên'}</strong><br>
-                    <small class="text-muted">📞 ${p.dienThoai || '---'}</small>
-                </div>
-            `;
-        });
-    }
-
-    function taoMoi() {
-        document.getElementById('patientId').value = '';
-        document.querySelectorAll('input:not([type="file"]), textarea').forEach(el => { if(el.id !== 'searchBox') el.value = ''; });
-        document.querySelectorAll('.preview-img').forEach(el => { el.src=''; el.style.display='none'; });
-    }
-
-    async function luuBenhAn() {
-        const id = document.getElementById('patientId').value || Date.now().toString();
-        const patientData = {
-            id: id,
-            ngayLap: document.getElementById('ngayLap').value,
-            hoTen: document.getElementById('hoTen').value,
-            namSinh: document.getElementById('namSinh').value,
-            dienThoai: document.getElementById('dienThoai').value,
-            diaChi: document.getElementById('diaChi').value,
-            visits: []
-        };
-
-        for (let i = 1; i <= 20; i++) {
-            let visit = { lan: i };
-            if (i === 1) {
-                visit.trieuChung = document.getElementById('trieuChung_1').value; visit.anhLuoi = document.getElementById('anhBase64_1').value;
-                visit.cachTri = document.getElementById('cachTri_1').value; visit.donThuoc = document.getElementById('donThuoc_1').value;
-                visit.soThang = document.getElementById('soThang_1').value; visit.thanhTien = document.getElementById('thanhTien_1').value;
-            } else {
-                visit.layLan = document.getElementById(`layLan_${i}`).value; visit.ngay = document.getElementById(`ngay_${i}`).value;
-                visit.anhLuoi = document.getElementById(`anhBase64_${i}`).value; visit.giaGiam = document.getElementById(`giaGiam_${i}`).value;
-                visit.soThangTien = document.getElementById(`soThangTien_${i}`).value;
-            }
-            patientData.visits.push(visit);
-        }
-
-        const existingIndex = patients.findIndex(p => p.id === id);
-        if(existingIndex >= 0) { patients[existingIndex] = patientData; } else { patients.unshift(patientData); }
-
-        await localforage.setItem('DanhSachBenhNhan_V4', patients);
-        document.getElementById('patientId').value = id;
-        taiDanhSach();
-        alert('✅ Đã lưu vào bộ nhớ tạm để có thể ghi tiếp lần sau!');
-    }
-
-    function taiBenhAn(id) {
-        const p = patients.find(x => x.id === id);
-        if(!p) return;
-        taoMoi();
-        document.getElementById('patientId').value = p.id;
-        document.getElementById('ngayLap').value = p.ngayLap || ''; document.getElementById('hoTen').value = p.hoTen || '';
-        document.getElementById('namSinh').value = p.namSinh || ''; document.getElementById('dienThoai').value = p.dienThoai || '';
-        document.getElementById('diaChi').value = p.diaChi || '';
-
-        p.visits.forEach((v, idx) => {
-            let i = idx + 1;
-            if (i > 20) return; // Bảo vệ an toàn nếu dữ liệu cũ có hơn 20 lần
-            if (i === 1) {
-                document.getElementById('trieuChung_1').value = v.trieuChung || ''; document.getElementById('cachTri_1').value = v.cachTri || '';
-                document.getElementById('donThuoc_1').value = v.donThuoc || ''; document.getElementById('soThang_1').value = v.soThang || ''; document.getElementById('thanhTien_1').value = v.thanhTien || '';
-            } else {
-                document.getElementById(`layLan_${i}`).value = v.layLan || ''; document.getElementById(`ngay_${i}`).value = v.ngay || '';
-                document.getElementById(`giaGiam_${i}`).value = v.giaGiam || ''; document.getElementById(`soThangTien_${i}`).value = v.soThangTien || '';
-            }
-            if (v.anhLuoi) {
-                document.getElementById(`anhBase64_${i}`).value = v.anhLuoi;
-                document.getElementById(`preview_${i}`).src = v.anhLuoi; document.getElementById(`preview_${i}`).style.display = 'block';
-            }
-        });
-    }
-
-    window.onload = taiDanhSach;
-
-    // ==========================================
-    // XUẤT RA FILE WORD VÀ TẢI LÊN DRIVE
-    // ==========================================
-    function base64ToArrayBuffer(base64) {
-        if(!base64) return null;
-        var binary_string = window.atob(base64.split(',')[1]);
-        var len = binary_string.length;
-        var bytes = new Uint8Array(len);
-        for (var i = 0; i < len; i++) { bytes[i] = binary_string.charCodeAt(i); }
-        return bytes.buffer;
-    }
-
-    async function xuatWord() {
-        const { Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType } = docx;
-
-        const formatDate = (dateStr) => dateStr ? dateStr.split('-').reverse().join('/') : "....................";
-        const hoTen = document.getElementById('hoTen').value.toUpperCase() || "........................................";
-        
-        let docChildren = [
-            new Paragraph({ alignment: AlignmentType.CENTER, children: [ new TextRun({ text: "PHÒNG KHÁM ĐÔNG Y ĐỨC MỪNG", bold: true, size: 32, color: "FF0000" }) ] }),
-            new Paragraph({ alignment: AlignmentType.CENTER, children: [ new TextRun({ text: "HỒ SƠ BỆNH ÁN", bold: true, size: 28 }) ] }),
-            new Paragraph({ text: "\n" }),
-            new Paragraph({ children: [ new TextRun({ text: `NGÀY THÁNG : `, bold: true }), new TextRun(formatDate(document.getElementById('ngayLap').value)) ] }),
-            new Paragraph({ children: [ new TextRun({ text: `HỌ TÊN : `, bold: true }), new TextRun(hoTen) ] }),
-            new Paragraph({ children: [ new TextRun({ text: `NĂM SINH : `, bold: true }), new TextRun(document.getElementById('namSinh').value || "............") ] }),
-            new Paragraph({ children: [ new TextRun({ text: `ĐỊA CHỈ : `, bold: true }), new TextRun(document.getElementById('diaChi').value || "..................................................") ] }),
-            new Paragraph({ children: [ new TextRun({ text: `ĐT : `, bold: true }), new TextRun(document.getElementById('dienThoai').value || "........................") ] }),
-            new Paragraph({ text: "\n" })
-        ];
-
-        for (let i = 1; i <= 20; i++) {
-            if (i === 1) {
-                const trieuChung = document.getElementById('trieuChung_1').value;
-                if(!trieuChung && !document.getElementById('anhBase64_1').value && !document.getElementById('donThuoc_1').value) continue;
-
-                docChildren.push(
-                    new Paragraph({ children: [ new TextRun({ text: `TRIỆU CHỨNG LÂM SÀNG : `, bold: true }) ] }),
-                    ...trieuChung.split('\n').map(line => new Paragraph({ text: line })),
-                    new Paragraph({ children: [ new TextRun({ text: `LƯỠI :`, bold: true }) ] })
-                );
-
-                const anhBuf = base64ToArrayBuffer(document.getElementById('anhBase64_1').value);
-                if (anhBuf) {
-                    docChildren.push(new Paragraph({ children: [new ImageRun({ data: anhBuf, transformation: { width: 300, height: 300 } })] }));
-                } else { docChildren.push(new Paragraph({ text: "   (Chưa chèn ảnh)" })); }
-
-                docChildren.push(
-                    new Paragraph({ children: [ new TextRun({ text: `CÁCH TRỊ : `, bold: true }), new TextRun(document.getElementById('cachTri_1').value) ] }),
-                    new Paragraph({ children: [ new TextRun({ text: `ĐƠN THUỐC : `, bold: true }) ] }),
-                    ...(document.getElementById('donThuoc_1').value).split('\n').map(line => new Paragraph({ text: line })),
-                    new Paragraph({ children: [ new TextRun({ text: `SỐ THANG : `, bold: true }), new TextRun(document.getElementById('soThang_1').value) ] }),
-                    new Paragraph({ children: [ new TextRun({ text: `THÀNH TIỀN : `, bold: true }), new TextRun(document.getElementById('thanhTien_1').value) ] }),
-                    new Paragraph({ text: "\n" })
-                );
-            } else {
-                const layLan = document.getElementById(`layLan_${i}`).value;
-                const ngay = document.getElementById(`ngay_${i}`).value;
-                const anh = document.getElementById(`anhBase64_${i}`).value;
-                const giaGiam = document.getElementById(`giaGiam_${i}`).value;
+            <div class="lg:col-span-2">
                 
-                if (!layLan && !ngay && !anh && !giaGiam) continue;
+                <div id="welcome-view" class="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center h-full flex flex-col justify-center items-center">
+                    <div class="text-6xl text-slate-200 mb-4">
+                        <i class="fa-solid fa-notes-medical"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-700 mb-2">Hệ Thống Đang Chờ</h3>
+                    <p class="text-sm text-slate-500">Tải ảnh lên và hệ thống AI trên trình duyệt sẽ tự động phân tích không qua máy chủ trung gian.</p>
+                </div>
 
-                docChildren.push(
-                    new Paragraph({ children: [ new TextRun({ text: `LẤY LẦN ${i} : `, bold: true }), new TextRun(layLan) ] }),
-                    new Paragraph({ children: [ new TextRun({ text: `NGÀY THÁNG : `, bold: true }), new TextRun(formatDate(ngay)) ] }),
-                    new Paragraph({ children: [ new TextRun({ text: `LƯỠI :`, bold: true }) ] })
-                );
+                <div id="loading-view" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center h-full flex flex-col justify-center items-center">
+                    <div class="relative w-16 h-16 mb-6">
+                        <div class="absolute inset-0 rounded-full border-4 border-slate-100"></div>
+                        <div class="absolute inset-0 rounded-full border-4 border-t-[#0f4c5c] animate-spin"></div>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-800 mb-2" id="loading-title">AI Đang Phân Tích...</h3>
+                    <p class="text-xs text-slate-400 animate-pulse">Quá trình này phụ thuộc vào tốc độ mạng và độ phân giải ảnh.</p>
+                </div>
 
-                const anhBuf = base64ToArrayBuffer(anh);
-                if (anhBuf) { docChildren.push(new Paragraph({ children: [new ImageRun({ data: anhBuf, transformation: { width: 300, height: 300 } })] })); } 
-                else { docChildren.push(new Paragraph({ text: "   (Chưa chèn ảnh)" })); }
+                <div id="result-view" class="hidden space-y-6">
+                    
+                    <div class="bg-amber-50 rounded-xl border border-amber-200 p-6 shadow-sm">
+                        <div class="flex items-start space-x-4">
+                            <div class="bg-amber-600 text-white p-3 rounded-lg text-xl shadow-sm">
+                                <i class="fa-solid fa-stethoscope"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-xs font-semibold text-amber-700 tracking-wider uppercase mb-1">Kết Luận Biện Chứng Luận Trị</div>
+                                <h2 id="res-the-benh" class="text-xl font-bold text-slate-900 mb-1">Tỳ Vị Hư Hàn</h2>
+                                <p id="res-co-che" class="text-sm text-slate-700 leading-relaxed">-</p>
+                            </div>
+                        </div>
+                    </div>
 
-                docChildren.push(
-                    new Paragraph({ children: [ new TextRun({ text: `GIA GIẢM : `, bold: true }) ] }),
-                    ...giaGiam.split('\n').map(line => new Paragraph({ text: line })),
-                    new Paragraph({ children: [ new TextRun({ text: `Số Thang / thành tiền : `, bold: true }), new TextRun(document.getElementById(`soThangTien_${i}`).value) ] }),
-                    new Paragraph({ text: "--------------------------------------------------------\n" })
-                );
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                            <div class="flex items-center space-x-2 text-rose-600 font-semibold text-sm mb-3 border-b border-slate-100 pb-2">
+                                <i class="fa-solid fa-heart-pulse"></i> <span>Chất Lưỡi & Thần</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div><span class="text-xs text-slate-400 block">Sắc lưỡi:</span> <span id="res-cl-mau" class="text-sm font-medium text-slate-800">-</span></div>
+                                <div><span class="text-xs text-slate-400 block">Thần khí:</span> <span id="res-cl-than" class="text-sm font-medium text-slate-800">-</span></div>
+                                <div><span class="text-xs text-slate-400 block">Ý nghĩa:</span> <p id="res-cl-yn" class="text-xs text-slate-600 leading-relaxed">-</p></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                            <div class="flex items-center space-x-2 text-teal-600 font-semibold text-sm mb-3 border-b border-slate-100 pb-2">
+                                <i class="fa-solid fa-shapes"></i> <span>Hình Dáng</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div><span class="text-xs text-slate-400 block">Biểu hiện:</span> <span id="res-hd-mota" class="text-sm font-medium text-slate-800">-</span></div>
+                                <div><span class="text-xs text-slate-400 block">Ý nghĩa:</span> <p id="res-hd-yn" class="text-xs text-slate-600 leading-relaxed">-</p></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                            <div class="flex items-center space-x-2 text-amber-600 font-semibold text-sm mb-3 border-b border-slate-100 pb-2">
+                                <i class="fa-solid fa-layer-group"></i> <span>Rêu Lưỡi</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div><span class="text-xs text-slate-400 block">Màu rêu:</span> <span id="res-rl-mau" class="text-sm font-medium text-slate-800">-</span></div>
+                                <div><span class="text-xs text-slate-400 block">Tính chất:</span> <span id="res-rl-chat" class="text-sm font-medium text-slate-800">-</span></div>
+                                <div><span class="text-xs text-slate-400 block">Ý nghĩa:</span> <p id="res-rl-yn" class="text-xs text-slate-600 leading-relaxed">-</p></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-[#0f4c5c] text-white px-5 py-3 flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-mortar-pestle"></i>
+                                <h3 class="font-bold text-sm">Cổ Phương Đề Xuất</h3>
+                            </div>
+                            <div id="res-bt-ten" class="bg-white/20 px-3 py-1 rounded-full text-xs font-semibold">-</div>
+                        </div>
+                        <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div class="border border-slate-100 rounded-lg overflow-hidden">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px] uppercase font-semibold">
+                                            <th class="px-3 py-2">Vị Thuốc</th>
+                                            <th class="px-3 py-2 text-right">Liều</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="res-bt-thanhphan" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                            <div class="space-y-3">
+                                <div>
+                                    <span class="text-[11px] font-semibold text-slate-400 block uppercase mb-1">Công Dụng Chủ Trị:</span>
+                                    <p id="res-bt-congdung" class="text-sm text-slate-700 font-medium">-</p>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                    <span class="text-[11px] font-semibold text-slate-500 block mb-1"><i class="fa-solid fa-fire-burner mr-1"></i> Cách Dùng:</span>
+                                    <p id="res-bt-cachdung" class="text-xs text-slate-600">-</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                        <h3 class="font-bold text-slate-900 mb-4 flex items-center text-sm">
+                            <i class="fa-solid fa-briefcase-medical mr-2 text-emerald-600"></i> Điều Dưỡng Toàn Diện
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
+                                <span class="text-[10px] font-bold text-emerald-800 uppercase block mb-2"><i class="fa-solid fa-apple-whole mr-1"></i> Nên Ăn:</span>
+                                <ul id="res-lk-nenan" class="text-[11px] text-slate-700 space-y-1"></ul>
+                            </div>
+                            <div class="bg-rose-50/50 p-3 rounded-xl border border-rose-100">
+                                <span class="text-[10px] font-bold text-rose-800 uppercase block mb-2"><i class="fa-solid fa-ban mr-1"></i> Kiêng Kỵ:</span>
+                                <ul id="res-lk-kieng" class="text-[11px] text-slate-700 space-y-1"></ul>
+                            </div>
+                            <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                                <span class="text-[10px] font-bold text-blue-800 uppercase block mb-2"><i class="fa-solid fa-person-running mr-1"></i> Sinh Hoạt:</span>
+                                <ul id="res-lk-sinhhoat" class="text-[11px] text-slate-700 space-y-1"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { GoogleGenAI } from '@google/genai';
+
+        // UI Elements
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const imagePreview = document.getElementById('image-preview');
+        const previewContainer = document.getElementById('preview-container');
+        const uploadPrompt = document.getElementById('upload-prompt');
+        const diagnoseBtn = document.getElementById('diagnose-btn');
+        const removeImgBtn = document.getElementById('remove-img-btn');
+        
+        const welcomeView = document.getElementById('welcome-view');
+        const loadingView = document.getElementById('loading-view');
+        const resultView = document.getElementById('result-view');
+        
+        // MÃ KHÓA API ĐÃ ĐƯỢC NHÚNG TRỰC TIẾP TẠI ĐÂY
+        const SYSTEM_API_KEY = "AQ.Ab8RN6LxLM9XAdZnE6vlFpElRqgF0ptHCO9H__2T9L96sJtpeg";
+
+        let currentImageBase64 = null;
+        let mimeType = null;
+
+        // --- IMAGE HANDLING ---
+        dropZone.addEventListener('click', (e) => {
+            if (e.target.closest('#remove-img-btn')) return;
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Vui lòng chọn file hình ảnh.');
+                return;
             }
+            
+            mimeType = file.type;
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                // Get base64 without the data:image/jpeg;base64, prefix for API
+                currentImageBase64 = e.target.result.split(',')[1]; 
+                
+                uploadPrompt.classList.add('hidden');
+                previewContainer.classList.remove('hidden');
+                diagnoseBtn.removeAttribute('disabled');
+                diagnoseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            reader.readAsDataURL(file);
         }
 
-        const doc = new Document({ sections: [{ properties: {}, children: docChildren }] });
+        removeImgBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.value = '';
+            currentImageBase64 = null;
+            imagePreview.src = '#';
+            previewContainer.classList.add('hidden');
+            uploadPrompt.classList.remove('hidden');
+            diagnoseBtn.setAttribute('disabled', 'true');
+            diagnoseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            welcomeView.classList.remove('hidden');
+            resultView.classList.add('hidden');
+        });
 
-        Packer.toBlob(doc).then(async (blob) => {
-            // Thay đổi theo yêu cầu: Bỏ chữ BenhAn_ và dấu gạch chân
-            let tenFile;
-            const tenKhachHang = document.getElementById('hoTen').value.trim();
-            if (tenKhachHang) {
-                tenFile = `${tenKhachHang.toUpperCase()}.docx`;
-            } else {
-                tenFile = `HOSO_CHUA_CO_TEN.docx`;
-            }
+        // --- AI DIAGNOSIS ---
+        
+        const PROMPT = `Bạn là chuyên gia Đông Y về Thiệt Chẩn. Hãy phân tích ảnh lưỡi và trả về ĐÚNG cấu trúc JSON sau, không có text nào khác ngoài JSON:
+{
+  "chat_luoi": { "mau_sac": "...", "than_khi": "...", "y_nghia": "..." },
+  "hinh_dang": { "mo_ta": "...", "y_nghia": "..." },
+  "reu_luoi": { "mau_sac": "...", "chat_reu": "...", "y_nghia": "..." },
+  "the_benh": { "ten_the": "...", "co_che": "..." },
+  "bai_thuoc": {
+    "ten_bai_thuoc": "...",
+    "thanh_phan": [ {"vi_thuoc": "...", "lieu_luong": "..."} ],
+    "cong_dung": "...", "cach_dung": "..."
+  },
+  "loi_khuyen": {
+    "nen_an": ["..."], "kieng_ky": ["..."], "sinh_hoat": ["..."]
+  }
+}`;
 
-            saveAs(blob, tenFile); 
-            
-            if(accessToken) {
-                await uploadToDrive(blob, tenFile);
-            } else {
-                alert("Bạn chưa đăng nhập Google Drive. File chỉ được lưu trên máy tính.");
+        diagnoseBtn.addEventListener('click', async () => {
+            if (!currentImageBase64) return;
+
+            welcomeView.classList.add('hidden');
+            resultView.classList.add('hidden');
+            loadingView.classList.remove('hidden');
+
+            try {
+                // Initialize Google Gen AI client with hardcoded key
+                const ai = new GoogleGenAI({ apiKey: SYSTEM_API_KEY });
+
+                // Call the API directly from browser
+                const response = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: [
+                        { text: PROMPT },
+                        {
+                            inlineData: {
+                                data: currentImageBase64,
+                                mimeType: mimeType
+                            }
+                        }
+                    ],
+                    config: {
+                        responseMimeType: "application/json",
+                        temperature: 0.2
+                    }
+                });
+
+                const jsonText = response.text;
+                let data;
+                try {
+                    data = JSON.parse(jsonText);
+                } catch (e) {
+                    throw new Error("AI không trả về đúng định dạng JSON.");
+                }
+
+                // Render Results
+                document.getElementById('res-the-benh').innerText = data.the_benh.ten_the;
+                document.getElementById('res-co-che').innerText = data.the_benh.co_che;
+                
+                document.getElementById('res-cl-mau').innerText = data.chat_luoi.mau_sac;
+                document.getElementById('res-cl-than').innerText = data.chat_luoi.than_khi;
+                document.getElementById('res-cl-yn').innerText = data.chat_luoi.y_nghia;
+
+                document.getElementById('res-hd-mota').innerText = data.hinh_dang.mo_ta;
+                document.getElementById('res-hd-yn').innerText = data.hinh_dang.y_nghia;
+
+                document.getElementById('res-rl-mau').innerText = data.reu_luoi.mau_sac;
+                document.getElementById('res-rl-chat').innerText = data.reu_luoi.chat_reu;
+                document.getElementById('res-rl-yn').innerText = data.reu_luoi.y_nghia;
+
+                document.getElementById('res-bt-ten').innerText = data.bai_thuoc.ten_bai_thuoc;
+                document.getElementById('res-bt-congdung').innerText = data.bai_thuoc.cong_dung;
+                document.getElementById('res-bt-cachdung').innerText = data.bai_thuoc.cach_dung;
+
+                // Table
+                const tableBody = document.getElementById('res-bt-thanhphan');
+                tableBody.innerHTML = '';
+                if(data.bai_thuoc.thanh_phan) {
+                    data.bai_thuoc.thanh_phan.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.className = "border-b border-slate-100 hover:bg-slate-50 text-xs text-slate-700";
+                        row.innerHTML = `
+                            <td class="px-3 py-2 font-medium">${item.vi_thuoc}</td>
+                            <td class="px-3 py-2 text-right font-semibold text-teal-800">${item.lieu_luong}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+
+                // Lists
+                document.getElementById('res-lk-nenan').innerHTML = (data.loi_khuyen.nen_an || []).map(i => `<li><span class="text-emerald-500 mr-1">✔</span>${i}</li>`).join('');
+                document.getElementById('res-lk-kieng').innerHTML = (data.loi_khuyen.kieng_ky || []).map(i => `<li><span class="text-rose-500 mr-1">✘</span>${i}</li>`).join('');
+                document.getElementById('res-lk-sinhhoat').innerHTML = (data.loi_khuyen.sinhhoat || data.loi_khuyen.sinh_hoat || []).map(i => `<li><span class="text-blue-500 mr-1">➔</span>${i}</li>`).join('');
+
+                loadingView.classList.add('hidden');
+                resultView.classList.remove('hidden');
+
+            } catch (error) {
+                console.error(error);
+                loadingView.classList.add('hidden');
+                welcomeView.classList.remove('hidden');
+                
+                // Friendly error message
+                if (error.message.includes("API key not valid") || error.status === 400) {
+                    alert('Lỗi: API Key bị từ chối. Vui lòng kiểm tra lại mã khóa đang sử dụng.');
+                } else {
+                    alert('Đã xảy ra lỗi khi kết nối với AI. Vui lòng thử lại sau. Chi tiết: ' + error.message);
+                }
             }
         });
-    }
-</script>
-
+    </script>
 </body>
 </html>
