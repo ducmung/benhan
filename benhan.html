@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thiệt Chẩn AI - Trợ Lý Đông Y</title>
+    <title>Thiệt Chẩn AI - Phòng Khám Đông Y BS.Đức Mừng</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -16,12 +16,27 @@
     </script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        /* Phông chữ Inter cho giao diện chung và Merriweather cho biển hiệu cổ kính */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@700;900&display=swap');
+        
         body { font-family: 'Inter', sans-serif; }
         .bg-medical { background: linear-gradient(135deg, #0f4c5c 0%, #1d3557 100%); }
         .btn-primary { background-color: #0f4c5c; }
         .btn-primary:hover { background-color: #146277; }
         
+        /* Hiệu ứng chữ 4D Vàng Kim Cổ Kính */
+        .text-4d-antique {
+            font-family: 'Merriweather', serif;
+            color: #ffde59; /* Màu vàng kim sáng */
+            text-shadow: 
+                1px 1px 0px #c08500,
+                2px 2px 0px #c08500,
+                3px 3px 0px #9e6d00,
+                4px 4px 0px #7c5500,
+                5px 5px 8px rgba(0, 0, 0, 0.7); /* Đổ bóng khối nổi */
+            letter-spacing: 0.5px;
+        }
+
         /* Modal for API Key setup */
         #api-key-modal {
             background-color: rgba(0, 0, 0, 0.5);
@@ -64,13 +79,16 @@
                     <p class="text-xs text-slate-200">Hệ Thống Chẩn Đoán Lưỡi & Đề Xuất Cổ Phương Tự Động</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
-                 <button id="change-key-btn" class="bg-white/10 hover:bg-white/20 transition-colors px-3 py-1.5 rounded-lg border border-white/20 text-xs text-white">
+            
+            <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-5 mt-2 md:mt-0">
+                 <button id="change-key-btn" class="bg-white/10 hover:bg-white/20 transition-colors px-3 py-1.5 rounded-lg border border-white/20 text-xs text-white shadow-sm">
                     <i class="fa-solid fa-key mr-1"></i> Đổi API Key
                 </button>
-                <div class="bg-white/10 px-4 py-2 rounded-lg border border-white/20 text-xs text-center md:text-right">
-                    <span class="text-orange-300 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Khuyến cáo:</span> 
-                    Kết quả mang tính tham khảo học thuật.
+                <div class="text-center md:text-right border-l-0 md:border-l border-white/20 pl-0 md:pl-5">
+                    <div class="text-4d-antique text-base md:text-xl font-black uppercase leading-snug">
+                        Phòng Khám Đông Y Gia Truyền<br>
+                        <span class="text-xl md:text-2xl tracking-wide">BS. Đức Mừng</span>
+                    </div>
                 </div>
             </div>
         </div>
