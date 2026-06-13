@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thiệt Chẩn AI - Phòng Khám Đông Y BS.Đức Mừng</title>
+    <title>Thiệt Chẩn AI - Phòng Khám BS. Đức Mừng</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -16,7 +16,7 @@
     </script>
 
     <style>
-        /* Phông chữ Inter cho giao diện chung và Merriweather cho biển hiệu cổ kính */
+        /* Phông chữ Inter cho giao diện và Merriweather cho biển hiệu cổ kính */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@700;900&display=swap');
         
         body { font-family: 'Inter', sans-serif; }
@@ -24,71 +24,77 @@
         .btn-primary { background-color: #0f4c5c; }
         .btn-primary:hover { background-color: #146277; }
         
-        /* Hiệu ứng chữ 4D Vàng Kim Cổ Kính */
-        .text-4d-antique {
+        /* Hiệu ứng chữ 4D Màu Gỗ Nổi Bật */
+        .text-4d-wood {
             font-family: 'Merriweather', serif;
-            color: #ffde59; /* Màu vàng kim sáng */
+            color: #f5deb3; /* Màu mặt chữ: vàng gỗ sáng */
             text-shadow: 
-                1px 1px 0px #c08500,
-                2px 2px 0px #c08500,
-                3px 3px 0px #9e6d00,
-                4px 4px 0px #7c5500,
-                5px 5px 8px rgba(0, 0, 0, 0.7); /* Đổ bóng khối nổi */
-            letter-spacing: 0.5px;
+                1px 1px 0px #b87333,
+                2px 2px 0px #a0522d,
+                3px 3px 0px #8b4513,
+                4px 4px 0px #5c4033,
+                5px 5px 0px #3e2723,  /* Các lớp tạo độ dày khối gỗ */
+                6px 6px 12px rgba(0, 0, 0, 0.9); /* Đổ bóng xuống nền */
+            letter-spacing: 1.5px;
         }
 
-        /* Modal for API Key setup */
-        #api-key-modal {
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
+        /* Modals */
+        .glass-overlay {
+            background-color: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
         }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
 
-    <div id="api-key-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 border border-slate-200">
+    <div id="login-modal" class="fixed inset-0 z-[100] flex items-center justify-center glass-overlay hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full mx-4 border-t-4 border-[#8b4513]">
             <div class="text-center mb-6">
-                <div class="bg-amber-100 text-amber-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                    <i class="fa-solid fa-shield-halved"></i>
+                <div class="bg-amber-100 text-[#8b4513] w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
+                    <i class="fa-solid fa-lock"></i>
                 </div>
-                <h2 class="text-xl font-bold text-slate-800">Cài đặt API Key Bảo Mật</h2>
-                <p class="text-xs text-slate-500 mt-2">Để tránh bị rò rỉ khóa trên GitHub, vui lòng dán khóa API của bạn vào đây. Khóa chỉ được lưu cục bộ trên trình duyệt này.</p>
+                <h2 class="text-xl font-bold text-slate-800">Xác Thực Truy Cập</h2>
+                <p class="text-xs text-slate-500 mt-2">Hệ thống nội bộ phòng khám. Vui lòng nhập mật khẩu để sử dụng.</p>
             </div>
-            
             <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Mã Khóa (API Key) của bạn:</label>
-                    <input type="password" id="api-key-input" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0f4c5c] focus:border-[#0f4c5c] text-sm" placeholder="Nhập khóa AIzaSy...">
-                </div>
-                <button id="save-key-btn" class="w-full py-2.5 rounded-lg text-white font-medium shadow-sm transition-all btn-primary">
-                    Lưu & Bắt Đầu Phân Tích
+                <input type="password" id="login-input" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#8b4513] focus:border-[#8b4513] text-center tracking-widest font-mono" placeholder="•••••••••">
+                <button id="login-btn" class="w-full py-3 rounded-lg text-white font-bold shadow-md transition-all hover:bg-[#5c4033]" style="background-color: #8b4513;">
+                    Đăng Nhập
                 </button>
             </div>
         </div>
     </div>
 
-    <header class="bg-medical text-white py-6 px-4 shadow-md">
-        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
-            <div class="flex items-center space-x-3 mb-4 md:mb-0">
-                <div class="bg-white p-2 rounded-full text-[#0f4c5c] text-2xl shadow">
-                    <i class="fa-solid fa-mortar-pestle"></i>
+    <div id="api-key-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 border border-slate-200">
+            <div class="text-center mb-6">
+                <div class="bg-amber-100 text-amber-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i class="fa-solid fa-shield-halved"></i>
                 </div>
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight">Thiệt Chẩn AI</h1>
-                    <p class="text-xs text-slate-200">Hệ Thống Chẩn Đoán Lưỡi & Đề Xuất Cổ Phương Tự Động</p>
-                </div>
+                <h2 class="text-xl font-bold text-slate-800">Cài đặt API Key AI</h2>
+                <p class="text-xs text-slate-500 mt-2">Dán khóa Google Gemini API của bạn vào đây. Khóa chỉ lưu cục bộ trên máy.</p>
             </div>
-            
-            <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-5 mt-2 md:mt-0">
-                 <button id="change-key-btn" class="bg-white/10 hover:bg-white/20 transition-colors px-3 py-1.5 rounded-lg border border-white/20 text-xs text-white shadow-sm">
-                    <i class="fa-solid fa-key mr-1"></i> Đổi API Key
+            <div class="space-y-4">
+                <div>
+                    <input type="password" id="api-key-input" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0f4c5c] focus:border-[#0f4c5c] text-sm" placeholder="Nhập khóa AIzaSy...">
+                </div>
+                <button id="save-key-btn" class="w-full py-2.5 rounded-lg text-white font-medium shadow-sm transition-all btn-primary">
+                    Lưu & Khởi Động Hệ Thống
                 </button>
-                <div class="text-center md:text-right border-l-0 md:border-l border-white/20 pl-0 md:pl-5">
-                    <div class="text-4d-antique text-base md:text-xl font-black uppercase leading-snug">
-                        Phòng Khám Đông Y Gia Truyền<br>
-                        <span class="text-xl md:text-2xl tracking-wide">BS. Đức Mừng</span>
-                    </div>
+            </div>
+        </div>
+    </div>
+
+    <header class="bg-medical py-8 px-4 shadow-xl relative overflow-hidden">
+        <button id="change-key-btn" class="absolute top-2 right-2 md:top-3 md:right-4 bg-white/10 hover:bg-white/20 transition-colors px-2 py-1 md:px-3 md:py-1.5 rounded border border-white/20 text-[10px] text-white/70 hover:text-white z-20">
+            <i class="fa-solid fa-key"></i> <span class="hidden md:inline">Đổi API</span>
+        </button>
+
+        <div class="max-w-6xl mx-auto relative z-10 flex justify-center items-center">
+            <div class="text-center">
+                <div class="text-4d-wood text-base md:text-xl font-black uppercase leading-relaxed">
+                    Phòng Khám Đông Y Gia Truyền<br>
+                    <span class="text-2xl md:text-4xl tracking-widest block mt-2">BS. Đức Mừng</span>
                 </div>
             </div>
         </div>
@@ -110,7 +116,7 @@
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
                             </div>
                             <div class="text-sm font-medium text-slate-700">Kéo thả ảnh vào đây hoặc nhấp</div>
-                            <div class="text-xs text-slate-400">Chạy trực tiếp 100% trên trình duyệt</div>
+                            <div class="text-xs text-slate-400">Phân tích bằng AI cục bộ</div>
                         </div>
                         
                         <div id="preview-container" class="hidden relative mt-2">
@@ -146,7 +152,7 @@
                         <i class="fa-solid fa-notes-medical"></i>
                     </div>
                     <h3 class="text-xl font-bold text-slate-700 mb-2">Hệ Thống Đang Chờ</h3>
-                    <p class="text-sm text-slate-500">Tải ảnh lên và hệ thống AI trên trình duyệt sẽ tự động phân tích không qua máy chủ trung gian.</p>
+                    <p class="text-sm text-slate-500">Tải ảnh lên và hệ thống AI sẽ tự động rà soát kinh lạc, chẩn đoán dựa trên 40 ca lâm sàng.</p>
                 </div>
 
                 <div id="loading-view" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center h-full flex flex-col justify-center items-center">
@@ -154,8 +160,8 @@
                         <div class="absolute inset-0 rounded-full border-4 border-slate-100"></div>
                         <div class="absolute inset-0 rounded-full border-4 border-t-[#0f4c5c] animate-spin"></div>
                     </div>
-                    <h3 class="text-lg font-semibold text-slate-800 mb-2" id="loading-title">AI Đang Phân Tích...</h3>
-                    <p class="text-xs text-slate-400 animate-pulse">Quá trình này phụ thuộc vào tốc độ mạng và độ phân giải ảnh.</p>
+                    <h3 class="text-lg font-semibold text-slate-800 mb-2">Hệ thống Đang Phân Tích...</h3>
+                    <p class="text-xs text-slate-400 animate-pulse">Đang đối chiếu dữ liệu hình ảnh với Từ Điển Lâm Sàng.</p>
                 </div>
 
                 <div id="result-view" class="hidden space-y-6">
@@ -269,6 +275,15 @@
         import { GoogleGenAI } from '@google/genai';
 
         // UI Elements
+        const loginModal = document.getElementById('login-modal');
+        const loginInput = document.getElementById('login-input');
+        const loginBtn = document.getElementById('login-btn');
+
+        const apiKeyModal = document.getElementById('api-key-modal');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const saveKeyBtn = document.getElementById('save-key-btn');
+        const changeKeyBtn = document.getElementById('change-key-btn');
+
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const imagePreview = document.getElementById('image-preview');
@@ -281,15 +296,36 @@
         const loadingView = document.getElementById('loading-view');
         const resultView = document.getElementById('result-view');
         
-        const apiKeyModal = document.getElementById('api-key-modal');
-        const apiKeyInput = document.getElementById('api-key-input');
-        const saveKeyBtn = document.getElementById('save-key-btn');
-        const changeKeyBtn = document.getElementById('change-key-btn');
-
         let currentImageBase64 = null;
         let mimeType = null;
 
-        // --- API KEY MANAGEMENT (SECURE) ---
+        // --- 1. LOGIN MANAGEMENT ---
+        function checkLogin() {
+            const isLoggedIn = localStorage.getItem('thietchan_logged_in');
+            if (isLoggedIn === 'true') {
+                loginModal.classList.add('hidden');
+                checkApiKey(); // Đăng nhập xong thì kiểm tra API Key
+            } else {
+                loginModal.classList.remove('hidden');
+            }
+        }
+
+        loginBtn.addEventListener('click', () => {
+            if (loginInput.value === 'ducmung86') {
+                localStorage.setItem('thietchan_logged_in', 'true');
+                loginModal.classList.add('hidden');
+                checkApiKey();
+            } else {
+                alert('Mật khẩu không chính xác!');
+            }
+        });
+
+        // Hỗ trợ ấn Enter để đăng nhập
+        loginInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+
+        // --- 2. API KEY MANAGEMENT ---
         function checkApiKey() {
             const savedKey = localStorage.getItem('thietchan_api_key');
             if (!savedKey) {
@@ -312,9 +348,10 @@
             apiKeyModal.classList.remove('hidden');
         });
 
-        checkApiKey(); // Yêu cầu nhập Key ở lần chạy đầu tiên
+        // Khởi động chuỗi kiểm tra khi mở web
+        checkLogin(); 
 
-        // --- IMAGE HANDLING ---
+        // --- 3. IMAGE HANDLING ---
         dropZone.addEventListener('click', (e) => {
             if (e.target.closest('#remove-img-btn')) return;
             fileInput.click();
@@ -335,7 +372,6 @@
             
             reader.onload = function(e) {
                 imagePreview.src = e.target.result;
-                // Lấy chuỗi base64 bỏ đi phần prefix
                 currentImageBase64 = e.target.result.split(',')[1]; 
                 
                 uploadPrompt.classList.add('hidden');
@@ -359,8 +395,7 @@
             resultView.classList.add('hidden');
         });
 
-        // --- AI DIAGNOSIS ---
-        
+        // --- 4. AI DIAGNOSIS ---
         const PROMPT = `Bạn là một Đại danh y Đông Y lỗi lạc, chuyên gia hàng đầu về Thiệt Chẩn. Nhiệm vụ của bạn là phân tích hình ảnh lưỡi được cung cấp để chẩn đoán bệnh.
 
 Để đảm bảo độ chính xác tuyệt đối và phong phú trong luận trị, bạn PHẢI kêt hợp kiến thức Đông Y uyên bác của mình với "TỪ ĐIỂN 40 CA LÂM SÀNG THỰC CHIẾN" dưới đây để đối chiếu, so sánh và tìm ra kết luận sát nhất với ảnh:
@@ -408,7 +443,7 @@
 --------------------------------------------------
 
 YÊU CẦU BẮT BUỘC: 
-- Đối chiếu tỉ mỉ các đặc điểm trên ảnh tải lên với bộ 40 ca trên để tìm ra sự tương đồng cao nhất. Chú ý đặc biệt đến các dấu hiệu phức tạp (rêu nấm mốc, bong tróc bẩn, rêu vàng khô nứt...).
+- Đối chiếu tỉ mỉ các đặc điểm trên ảnh tải lên với bộ 40 ca trên để tìm ra sự tương đồng cao nhất. Chú ý đặc biệt đến các dấu hiệu phức tạp.
 - Đưa ra kết luận chi tiết, chuyên sâu, và phong phú.
 - CHỈ TRẢ VỀ ĐÚNG cấu trúc JSON sau, tuyệt đối không có markdown (\`\`\`json) hay text thừa:
 {
@@ -441,10 +476,8 @@ YÊU CẦU BẮT BUỘC:
             loadingView.classList.remove('hidden');
 
             try {
-                // Gọi AI bằng Key an toàn
                 const ai = new GoogleGenAI({ apiKey: apiKey });
 
-                // Thực thi yêu cầu phân tích
                 const response = await ai.models.generateContent({
                     model: 'gemini-2.5-flash',
                     contents: [
@@ -470,7 +503,7 @@ YÊU CẦU BẮT BUỘC:
                     throw new Error("AI không trả về đúng định dạng JSON.");
                 }
 
-                // Render dữ liệu lên giao diện
+                // Đổ dữ liệu
                 document.getElementById('res-the-benh').innerText = data.the_benh.ten_the;
                 document.getElementById('res-co-che').innerText = data.the_benh.co_che;
                 
@@ -489,7 +522,6 @@ YÊU CẦU BẮT BUỘC:
                 document.getElementById('res-bt-congdung').innerText = data.bai_thuoc.cong_dung;
                 document.getElementById('res-bt-cachdung').innerText = data.bai_thuoc.cach_dung;
 
-                // Bảng Vị Thuốc
                 const tableBody = document.getElementById('res-bt-thanhphan');
                 tableBody.innerHTML = '';
                 if(data.bai_thuoc.thanh_phan) {
@@ -504,7 +536,6 @@ YÊU CẦU BẮT BUỘC:
                     });
                 }
 
-                // Danh sách lời khuyên
                 document.getElementById('res-lk-nenan').innerHTML = (data.loi_khuyen.nen_an || []).map(i => `<li><span class="text-emerald-500 mr-1">✔</span>${i}</li>`).join('');
                 document.getElementById('res-lk-kieng').innerHTML = (data.loi_khuyen.kieng_ky || []).map(i => `<li><span class="text-rose-500 mr-1">✘</span>${i}</li>`).join('');
                 document.getElementById('res-lk-sinhhoat').innerHTML = (data.loi_khuyen.sinhhoat || data.loi_khuyen.sinh_hoat || []).map(i => `<li><span class="text-blue-500 mr-1">➔</span>${i}</li>`).join('');
@@ -517,7 +548,6 @@ YÊU CẦU BẮT BUỘC:
                 loadingView.classList.add('hidden');
                 welcomeView.classList.remove('hidden');
                 
-                // Cảnh báo lỗi
                 if (error.message.includes("API key not valid") || error.status === 400 || error.status === 403) {
                     alert('Lỗi: API Key bị từ chối hoặc rò rỉ. Vui lòng kiểm tra lại mã khóa.');
                     apiKeyModal.classList.remove('hidden');
