@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Import Google Generative AI SDK for Web -->
     <script type="importmap">
       {
         "imports": {
@@ -32,7 +31,6 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
 
-    <!-- API Key Setup Modal (Hiển thị để bảo mật Key) -->
     <div id="api-key-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
         <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 border border-slate-200">
             <div class="text-center mb-6">
@@ -45,7 +43,7 @@
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Mã Khóa (API Key) mới của bạn:</label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Mã Khóa (API Key) của bạn:</label>
                     <input type="password" id="api-key-input" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0f4c5c] focus:border-[#0f4c5c] text-sm" placeholder="Nhập khóa AIzaSy...">
                 </div>
                 <button id="save-key-btn" class="w-full py-2.5 rounded-lg text-white font-medium shadow-sm transition-all btn-primary">
@@ -55,7 +53,6 @@
         </div>
     </div>
 
-    <!-- Header -->
     <header class="bg-medical text-white py-6 px-4 shadow-md">
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
             <div class="flex items-center space-x-3 mb-4 md:mb-0">
@@ -82,7 +79,6 @@
     <main class="max-w-6xl mx-auto px-4 py-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- CỘT TRÁI: UPLOAD -->
             <div class="lg:col-span-1 space-y-6">
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center">
@@ -125,7 +121,6 @@
                 </div>
             </div>
 
-            <!-- CỘT PHẢI: KẾT QUẢ -->
             <div class="lg:col-span-2">
                 
                 <div id="welcome-view" class="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center h-full flex flex-col justify-center items-center">
@@ -145,7 +140,6 @@
                     <p class="text-xs text-slate-400 animate-pulse">Quá trình này phụ thuộc vào tốc độ mạng và độ phân giải ảnh.</p>
                 </div>
 
-                <!-- KHỐI KẾT QUẢ -->
                 <div id="result-view" class="hidden space-y-6">
                     
                     <div class="bg-amber-50 rounded-xl border border-amber-200 p-6 shadow-sm">
@@ -162,7 +156,6 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <!-- Chất Lưỡi -->
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
                             <div class="flex items-center space-x-2 text-rose-600 font-semibold text-sm mb-3 border-b border-slate-100 pb-2">
                                 <i class="fa-solid fa-heart-pulse"></i> <span>Chất Lưỡi & Thần</span>
@@ -174,7 +167,6 @@
                             </div>
                         </div>
 
-                        <!-- Hình Dáng -->
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
                             <div class="flex items-center space-x-2 text-teal-600 font-semibold text-sm mb-3 border-b border-slate-100 pb-2">
                                 <i class="fa-solid fa-shapes"></i> <span>Hình Dáng</span>
@@ -185,7 +177,6 @@
                             </div>
                         </div>
 
-                        <!-- Rêu Lưỡi -->
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
                             <div class="flex items-center space-x-2 text-amber-600 font-semibold text-sm mb-3 border-b border-slate-100 pb-2">
                                 <i class="fa-solid fa-layer-group"></i> <span>Rêu Lưỡi</span>
@@ -198,7 +189,6 @@
                         </div>
                     </div>
 
-                    <!-- Bài thuốc -->
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                         <div class="bg-[#0f4c5c] text-white px-5 py-3 flex items-center justify-between">
                             <div class="flex items-center space-x-2">
@@ -232,7 +222,6 @@
                         </div>
                     </div>
 
-                    <!-- Lời khuyên -->
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
                         <h3 class="font-bold text-slate-900 mb-4 flex items-center text-sm">
                             <i class="fa-solid fa-briefcase-medical mr-2 text-emerald-600"></i> Điều Dưỡng Toàn Diện
@@ -258,7 +247,6 @@
         </div>
     </main>
 
-    <!-- App Logic -->
     <script type="module">
         import { GoogleGenAI } from '@google/genai';
 
@@ -306,7 +294,7 @@
             apiKeyModal.classList.remove('hidden');
         });
 
-        checkApiKey(); // Yêu cầu người dùng nhập Key khi web tải xong
+        checkApiKey(); // Yêu cầu nhập Key ở lần chạy đầu tiên
 
         // --- IMAGE HANDLING ---
         dropZone.addEventListener('click', (e) => {
@@ -329,7 +317,7 @@
             
             reader.onload = function(e) {
                 imagePreview.src = e.target.result;
-                // Get base64 without the data:image/jpeg;base64, prefix for API
+                // Lấy chuỗi base64 bỏ đi phần prefix
                 currentImageBase64 = e.target.result.split(',')[1]; 
                 
                 uploadPrompt.classList.add('hidden');
@@ -355,7 +343,56 @@
 
         // --- AI DIAGNOSIS ---
         
-        const PROMPT = `Bạn là chuyên gia Đông Y về Thiệt Chẩn. Hãy phân tích ảnh lưỡi và trả về ĐÚNG cấu trúc JSON sau, không có text nào khác ngoài JSON:
+        const PROMPT = `Bạn là một Đại danh y Đông Y lỗi lạc, chuyên gia hàng đầu về Thiệt Chẩn. Nhiệm vụ của bạn là phân tích hình ảnh lưỡi được cung cấp để chẩn đoán bệnh.
+
+Để đảm bảo độ chính xác tuyệt đối và phong phú trong luận trị, bạn PHẢI kêt hợp kiến thức Đông Y uyên bác của mình với "TỪ ĐIỂN 40 CA LÂM SÀNG THỰC CHIẾN" dưới đây để đối chiếu, so sánh và tìm ra kết luận sát nhất với ảnh:
+
+--- TỪ ĐIỂN 40 CA LÂM SÀNG THỰC CHIẾN CHUẨN MỰC ---
+1. Lưỡi đỏ nhạt, rêu mỏng trắng (Bình thường): Khỏe mạnh hoặc biểu chứng ngoại cảm nhẹ.
+2. Lưỡi rụt ngắn, đỏ giáng, trơn bóng vô thần: Chứng nguy, nhiệt thịnh tổn thương âm, tỳ/vị dương sắp tuyệt.
+3. Lưỡi non bệu, trắng nhợt, hằn răng, rêu trong nhuận: Hàn dương suy, Tỳ vị hư hàn, âm huyết hư.
+4. Lưỡi nhạt, mỏng nhỏ, rêu trắng khô (có vệt xám giữa): Khí huyết hư, thấp trệ bất hóa sinh hàn.
+5. Lưỡi đỏ, bệu, nổi gai nhọn, rêu dày vàng dính: Chứng thực nhiệt, ngoại cảm hóa nhiệt, thấp nhiệt kết huyết phận.
+6. Lưỡi non đỏ, ít rêu (bong tróc): Chứng hư nhiệt, nhiệt thịnh thương âm, nội thương khí huyết chưa hồi phục.
+7. Lưỡi mỏng nhỏ, đỏ sậm, rêu cực mỏng: Nhiệt vào dinh huyết, Âm hư hỏa vượng.
+8. Lưỡi tím bầm (xanh tối), hằn răng, rêu trắng nhuận: Hàn ngưng huyết tụ, Âm hàn kèm thấp.
+9. Lưỡi nhợt tối, săn chắc vân thô, rêu dày đặc trắng: Chứng thực, hàn thấp đờm trọc uất kết hóa nhiệt.
+10. Lưỡi đỏ bệu, rìa nổi gai, rêu dày thô trắng kiêm vàng: Tỳ vị thấp nhiệt đờm trọc vật lộn, ôn bệnh hóa táo thương âm.
+11. Lưỡi xanh tím sắc tối, bệu có dấu răng, rêu dày bẩn trắng khô: Trúng độc khí huyết ứ trệ, thấp nhiệt tích tụ huyết.
+12. Lưỡi trắng nhạt tối, mỏng nhỏ, rêu mỏng (gốc rêu dày vàng): Khí huyết hư, thấp nhiệt hạ tiêu ngăn trở.
+13. Lưỡi đỏ tối mềm yếu, rìa nổi gai, rêu dày trắng khô (gốc xám): Nhiệt độc cực thịnh xâm nhập huyết phận/tâm.
+14. Lưỡi đỏ nhạt, mỏng nhỏ, rìa/chóp nổi gai nhọn, rêu dày trắng khô kiêm vàng nhạt: Ôn bệnh khí phận nhiệt cực, Tâm Can hỏa vượng.
+15. Lưỡi đỏ tối, giữa tụ ban/nứt nẻ, rêu dày trắng kiêm vàng khô nứt: Nhiệt vào dinh huyết (phát ban), âm suy đờm trọc bất hóa.
+16. Lưỡi đỏ, rạn nứt sâu (như dao cứa), rêu cực ít: Thực nhiệt nội bức thương âm, thể chất âm hư, huyết suy dịch cạn.
+17. Lưỡi đỏ nhạt phình to, hằn răng, chóp nứt nẻ, rêu mỏng trắng: Tâm huyết hao hụt, Thận âm hao tổn, Tâm Thận bất giao.
+18. Lưỡi nhợt non bệu, hằn răng, rêu dày trắng nhuận ướt: Hàn thấp uẩn thịnh, Tỳ hư thấp thịnh.
+19. Lưỡi nhợt bệu, hằn răng, rêu dày trắng kiêm vàng: Tỳ hư, Dương hư hàn thấp hóa nhiệt.
+20. Lưỡi trắng nhợt phình to, rìa gai, khối u sưng viêm loét, rêu dày trắng: Tâm tỳ uất hỏa, khí kết hóa viêm, Hỏa độc nội hao (Nguy cơ ung thư).
+21. Lưỡi đỏ nhạt, hai rìa và chóp nổi gai/mụn nước không loét, rêu mỏng trắng khô: Nấm lưỡi (u lành), Can uất khí kết, Tâm kinh uất hỏa.
+22. Gân mạch dưới lưỡi xanh tím, phình to phân nhánh rõ: Đàm nhiệt nội trở, khí trệ huyết tụ.
+23. Lưỡi hồng nhạt, mỏng nhỏ non, cứng đờ khó co duỗi, quang bóng vô rêu (Chứng nguy): Âm huyết không đủ phong hư nội động, điềm báo trúng phong.
+24. Lưỡi đỏ khô, mềm yếu khó cử động, nứt giữa, rêu vàng/trắng bẩn nát (Chứng nguy): Nhiệt tà đốt hao tân thương, Thấp nhiệt chưa sạch thận vị âm kiệt, Âm hư hỏa vượng.
+25. Lưỡi đỏ tím thẫm, sắc tối, phình to lệch phải, rêu mỏng trắng (gốc dày): Can phong phát giật, Phong đờm chủ lạc, triệu chứng trúng phong.
+26. Lưỡi đỏ nhạt, non, thè ra lệch trái, rêu mỏng ít trắng: Trúng phong, Phong đờm trở lạc.
+27. Lưỡi non đỏ, quang bóng không rêu, rụt co ngắn khô tân dịch (Chứng nguy): Nhiệt thịnh thương âm động phong, Thận vị âm kiệt táo nhiệt sinh phong.
+28. Lưỡi trắng nhợt non bệu, hằn răng, rêu dày trắng nhuận trơn: Chứng hàn lý hư, Hàn ẩm ngưng trệ tại Tỳ, Dương hư hàn đàm ngưng trệ Phế.
+29. Lưỡi đỏ, mỏng nhỏ, rêu trắng dày nứt nẻ chuyển vàng: Ôn bệnh nội nhiệt bạo phát tân dịch hao thương, Khí phân nhiệt cực.
+30. Lưỡi đỏ giáng, nổi gai nhọn cao, rêu dày đặc đen khô nứt: Nhiệt cực tân dịch khô, Nhiệt độc xâm phạm tâm, Huyết uẩn thấp nhiệt đàm nhiệt phủ thực.
+31. Lưỡi đỏ giáng, non, rêu dày đặc nhuận trơn, đỏ vàng chuyển đen (như nấm mốc): Thấp nhiệt kết thái âm, tràng vị thấp trọc kết tụ hóa nhiệt, thấp ôn nhiệt vào dinh huyết, trong hàn ngoài nhiệt.
+32. Lưỡi trắng nhợt, non bệu, hằn răng, rêu dày trắng nhuận trơn: Dương hư thủy thấp bất hóa (thấp tụ thành đàm ẩm), Hàn thấp ngưng trệ tại tỳ.
+33. Lưỡi đỏ nhạt, nhiều nứt nẻ nhỏ, rêu vàng khô từng mảng (giữa lưỡi rêu ít): Nhiệt thịnh thương tân, Âm dịch hao tổn, Tràng vị nhiệt kết thương âm.
+34. Lưỡi đỏ nhạt, phình to, hằn răng, chóp gai đỏ, rêu dày đặc trắng dính: Thấp trọc uẩn kết, dương khí suy kiệt, Tỳ hư thấp thịnh.
+35. Lưỡi đỏ sắc tối, rêu bong tróc bẩn (bã đậu, cào có thể đi): Thấp nhiệt vào huyết (khí âm đều thương), Thấp trọc bất hóa, vị khí suy.
+36. Lưỡi nhợt, phình to, hằn răng, giữa nứt nẻ, rêu trắng khô hạt thô: Nhiệt kết thương tổn tân dịch, khí hư dương khí hư hao tân dịch.
+37. Lưỡi đỏ nhạt, chóp gai đỏ, hằn răng, rêu dày trắng (chóp mỏng, gốc dày, rìa vàng): Nhiệt tại thượng tiêu, Ngoại cảm phong hàn tại biểu.
+38. Lưỡi đỏ tươi rắn chắc, rêu dày trắng nhuận trơn: Lý nhiệt kèm theo thấp.
+39. Lưỡi nhợt kèm sắc xanh, rêu rấy trắng kiêm vàng: Mùa hè thử nhiệt (ăn đồ lạnh sinh hàn), Hàn thấp uẩn tích thâm nhập huyết phận, Chân hàn giả nhiệt.
+--------------------------------------------------
+
+YÊU CẦU BẮT BUỘC: 
+- Đối chiếu tỉ mỉ các đặc điểm trên ảnh tải lên với bộ 40 ca trên để tìm ra sự tương đồng cao nhất. Chú ý đặc biệt đến các dấu hiệu phức tạp (rêu nấm mốc, bong tróc bẩn, rêu vàng khô nứt...).
+- Đưa ra kết luận chi tiết, chuyên sâu, và phong phú.
+- CHỈ TRẢ VỀ ĐÚNG cấu trúc JSON sau, tuyệt đối không có markdown (\`\`\`json) hay text thừa:
 {
   "chat_luoi": { "mau_sac": "...", "than_khi": "...", "y_nghia": "..." },
   "hinh_dang": { "mo_ta": "...", "y_nghia": "..." },
@@ -386,10 +423,10 @@
             loadingView.classList.remove('hidden');
 
             try {
-                // Sử dụng Key lấy từ bộ nhớ máy người dùng
+                // Gọi AI bằng Key an toàn
                 const ai = new GoogleGenAI({ apiKey: apiKey });
 
-                // Call the API directly from browser
+                // Thực thi yêu cầu phân tích
                 const response = await ai.models.generateContent({
                     model: 'gemini-2.5-flash',
                     contents: [
@@ -415,7 +452,7 @@
                     throw new Error("AI không trả về đúng định dạng JSON.");
                 }
 
-                // Render Results
+                // Render dữ liệu lên giao diện
                 document.getElementById('res-the-benh').innerText = data.the_benh.ten_the;
                 document.getElementById('res-co-che').innerText = data.the_benh.co_che;
                 
@@ -434,7 +471,7 @@
                 document.getElementById('res-bt-congdung').innerText = data.bai_thuoc.cong_dung;
                 document.getElementById('res-bt-cachdung').innerText = data.bai_thuoc.cach_dung;
 
-                // Table
+                // Bảng Vị Thuốc
                 const tableBody = document.getElementById('res-bt-thanhphan');
                 tableBody.innerHTML = '';
                 if(data.bai_thuoc.thanh_phan) {
@@ -449,7 +486,7 @@
                     });
                 }
 
-                // Lists
+                // Danh sách lời khuyên
                 document.getElementById('res-lk-nenan').innerHTML = (data.loi_khuyen.nen_an || []).map(i => `<li><span class="text-emerald-500 mr-1">✔</span>${i}</li>`).join('');
                 document.getElementById('res-lk-kieng').innerHTML = (data.loi_khuyen.kieng_ky || []).map(i => `<li><span class="text-rose-500 mr-1">✘</span>${i}</li>`).join('');
                 document.getElementById('res-lk-sinhhoat').innerHTML = (data.loi_khuyen.sinhhoat || data.loi_khuyen.sinh_hoat || []).map(i => `<li><span class="text-blue-500 mr-1">➔</span>${i}</li>`).join('');
@@ -462,7 +499,7 @@
                 loadingView.classList.add('hidden');
                 welcomeView.classList.remove('hidden');
                 
-                // Friendly error message
+                // Cảnh báo lỗi
                 if (error.message.includes("API key not valid") || error.status === 400 || error.status === 403) {
                     alert('Lỗi: API Key bị từ chối hoặc rò rỉ. Vui lòng kiểm tra lại mã khóa.');
                     apiKeyModal.classList.remove('hidden');
