@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Import Google Generative AI SDK for Web -->
     <script type="importmap">
       {
         "imports": {
@@ -27,18 +28,17 @@
         /* Hiệu ứng chữ 4D Màu Gỗ Nổi Bật */
         .text-4d-wood {
             font-family: 'Merriweather', serif;
-            color: #f5deb3; /* Màu mặt chữ: vàng gỗ sáng */
+            color: #f5deb3;
             text-shadow: 
                 1px 1px 0px #b87333,
                 2px 2px 0px #a0522d,
                 3px 3px 0px #8b4513,
                 4px 4px 0px #5c4033,
-                5px 5px 0px #3e2723,  /* Các lớp tạo độ dày khối gỗ */
-                6px 6px 12px rgba(0, 0, 0, 0.9); /* Đổ bóng xuống nền */
+                5px 5px 0px #3e2723,
+                6px 6px 12px rgba(0, 0, 0, 0.9);
             letter-spacing: 1.5px;
         }
 
-        /* Modals */
         .glass-overlay {
             background-color: rgba(15, 23, 42, 0.9);
             backdrop-filter: blur(8px);
@@ -47,6 +47,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
 
+    <!-- LỚP BẢO MẬT 1: YÊU CẦU MẬT KHẨU -->
     <div id="login-modal" class="fixed inset-0 z-[100] flex items-center justify-center glass-overlay hidden">
         <div class="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full mx-4 border-t-4 border-[#8b4513]">
             <div class="text-center mb-6">
@@ -65,6 +66,7 @@
         </div>
     </div>
 
+    <!-- LỚP BẢO MẬT 2: API KEY -->
     <div id="api-key-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
         <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 border border-slate-200">
             <div class="text-center mb-6">
@@ -85,6 +87,7 @@
         </div>
     </div>
 
+    <!-- HEADER / BIỂN HIỆU -->
     <header class="bg-medical py-8 px-4 shadow-xl relative overflow-hidden">
         <button id="change-key-btn" class="absolute top-2 right-2 md:top-3 md:right-4 bg-white/10 hover:bg-white/20 transition-colors px-2 py-1 md:px-3 md:py-1.5 rounded border border-white/20 text-[10px] text-white/70 hover:text-white z-20">
             <i class="fa-solid fa-key"></i> <span class="hidden md:inline">Đổi API</span>
@@ -102,7 +105,7 @@
 
     <main class="max-w-6xl mx-auto px-4 py-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+            <!-- CỘT TRÁI: UPLOAD -->
             <div class="lg:col-span-1 space-y-6">
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center">
@@ -116,7 +119,7 @@
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
                             </div>
                             <div class="text-sm font-medium text-slate-700">Kéo thả ảnh vào đây hoặc nhấp</div>
-                            <div class="text-xs text-slate-400">Phân tích bằng AI cục bộ</div>
+                            <div class="text-xs text-slate-400">Hệ thống phân tích thông minh</div>
                         </div>
                         
                         <div id="preview-container" class="hidden relative mt-2">
@@ -145,14 +148,14 @@
                 </div>
             </div>
 
+            <!-- CỘT PHẢI: KẾT QUẢ -->
             <div class="lg:col-span-2">
-                
                 <div id="welcome-view" class="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center h-full flex flex-col justify-center items-center">
                     <div class="text-6xl text-slate-200 mb-4">
                         <i class="fa-solid fa-notes-medical"></i>
                     </div>
                     <h3 class="text-xl font-bold text-slate-700 mb-2">Hệ Thống Đang Chờ</h3>
-                    <p class="text-sm text-slate-500">Tải ảnh lên và hệ thống AI sẽ tự động rà soát kinh lạc, chẩn đoán dựa trên 40 ca lâm sàng.</p>
+                    <p class="text-sm text-slate-500">Tải ảnh lên và hệ thống AI sẽ rà soát kinh lạc, chẩn bệnh, và xuất phương thuốc cổ truyền.</p>
                 </div>
 
                 <div id="loading-view" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center h-full flex flex-col justify-center items-center">
@@ -160,12 +163,12 @@
                         <div class="absolute inset-0 rounded-full border-4 border-slate-100"></div>
                         <div class="absolute inset-0 rounded-full border-4 border-t-[#0f4c5c] animate-spin"></div>
                     </div>
-                    <h3 class="text-lg font-semibold text-slate-800 mb-2">Hệ thống Đang Phân Tích...</h3>
-                    <p class="text-xs text-slate-400 animate-pulse">Đang đối chiếu dữ liệu hình ảnh với Từ Điển Lâm Sàng.</p>
+                    <h3 class="text-lg font-semibold text-slate-800 mb-2">Đang Giải Mã Đồ Án Lưỡi...</h3>
+                    <p class="text-xs text-slate-400 animate-pulse">Đối chiếu hàng ngàn phương thang cổ truyền. Xin chờ trong giây lát.</p>
                 </div>
 
+                <!-- KHỐI KẾT QUẢ -->
                 <div id="result-view" class="hidden space-y-6">
-                    
                     <div class="bg-amber-50 rounded-xl border border-amber-200 p-6 shadow-sm">
                         <div class="flex items-start space-x-4">
                             <div class="bg-amber-600 text-white p-3 rounded-lg text-xl shadow-sm">
@@ -173,7 +176,7 @@
                             </div>
                             <div class="flex-1">
                                 <div class="text-xs font-semibold text-amber-700 tracking-wider uppercase mb-1">Kết Luận Biện Chứng Luận Trị</div>
-                                <h2 id="res-the-benh" class="text-xl font-bold text-slate-900 mb-1">Tỳ Vị Hư Hàn</h2>
+                                <h2 id="res-the-benh" class="text-xl font-bold text-slate-900 mb-1">-</h2>
                                 <p id="res-co-che" class="text-sm text-slate-700 leading-relaxed">-</p>
                             </div>
                         </div>
@@ -217,7 +220,7 @@
                         <div class="bg-[#0f4c5c] text-white px-5 py-3 flex items-center justify-between">
                             <div class="flex items-center space-x-2">
                                 <i class="fa-solid fa-mortar-pestle"></i>
-                                <h3 class="font-bold text-sm">Cổ Phương Đề Xuất</h3>
+                                <h3 class="font-bold text-sm">Cổ Phương Đề Xuất (Theo Y Lý Đầu Ngành)</h3>
                             </div>
                             <div id="res-bt-ten" class="bg-white/20 px-3 py-1 rounded-full text-xs font-semibold">-</div>
                         </div>
@@ -227,7 +230,7 @@
                                     <thead>
                                         <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px] uppercase font-semibold">
                                             <th class="px-3 py-2">Vị Thuốc</th>
-                                            <th class="px-3 py-2 text-right">Liều</th>
+                                            <th class="px-3 py-2 text-right">Liều Lượng</th>
                                         </tr>
                                     </thead>
                                     <tbody id="res-bt-thanhphan" class="divide-y divide-slate-100"></tbody>
@@ -271,6 +274,7 @@
         </div>
     </main>
 
+    <!-- App Logic -->
     <script type="module">
         import { GoogleGenAI } from '@google/genai';
 
@@ -304,7 +308,7 @@
             const isLoggedIn = localStorage.getItem('thietchan_logged_in');
             if (isLoggedIn === 'true') {
                 loginModal.classList.add('hidden');
-                checkApiKey(); // Đăng nhập xong thì kiểm tra API Key
+                checkApiKey();
             } else {
                 loginModal.classList.remove('hidden');
             }
@@ -320,7 +324,6 @@
             }
         });
 
-        // Hỗ trợ ấn Enter để đăng nhập
         loginInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') loginBtn.click();
         });
@@ -348,7 +351,6 @@
             apiKeyModal.classList.remove('hidden');
         });
 
-        // Khởi động chuỗi kiểm tra khi mở web
         checkLogin(); 
 
         // --- 3. IMAGE HANDLING ---
@@ -395,57 +397,55 @@
             resultView.classList.add('hidden');
         });
 
-        // --- 4. AI DIAGNOSIS ---
-        const PROMPT = `Bạn là một Đại danh y Đông Y lỗi lạc, chuyên gia hàng đầu về Thiệt Chẩn. Nhiệm vụ của bạn là phân tích hình ảnh lưỡi được cung cấp để chẩn đoán bệnh.
+        // --- 4. AI DIAGNOSIS CORE ---
+        const PROMPT = `Bạn là một Đại danh y Đông Y lỗi lạc, có kiến thức uyên bác về Thiệt Chẩn và thuộc nằm lòng cuốn "Phương Thang Y Học Cổ Truyền". Nhiệm vụ của bạn là phân tích hình ảnh lưỡi để chẩn đoán bệnh và xuất phương thuốc.
 
-Để đảm bảo độ chính xác tuyệt đối và phong phú trong luận trị, bạn PHẢI kêt hợp kiến thức Đông Y uyên bác của mình với "TỪ ĐIỂN 40 CA LÂM SÀNG THỰC CHIẾN" dưới đây để đối chiếu, so sánh và tìm ra kết luận sát nhất với ảnh:
-
---- TỪ ĐIỂN 40 CA LÂM SÀNG THỰC CHIẾN CHUẨN MỰC ---
+BƯỚC 1: KHÁM BỆNH - ĐỐI CHIẾU 40 CA LÂM SÀNG THỰC CHIẾN
 1. Lưỡi đỏ nhạt, rêu mỏng trắng (Bình thường): Khỏe mạnh hoặc biểu chứng ngoại cảm nhẹ.
 2. Lưỡi rụt ngắn, đỏ giáng, trơn bóng vô thần: Chứng nguy, nhiệt thịnh tổn thương âm, tỳ/vị dương sắp tuyệt.
 3. Lưỡi non bệu, trắng nhợt, hằn răng, rêu trong nhuận: Hàn dương suy, Tỳ vị hư hàn, âm huyết hư.
-4. Lưỡi nhạt, mỏng nhỏ, rêu trắng khô (có vệt xám giữa): Khí huyết hư, thấp trệ bất hóa sinh hàn.
+4. Lưỡi nhạt, mỏng nhỏ, rêu trắng khô: Khí huyết hư, thấp trệ bất hóa sinh hàn.
 5. Lưỡi đỏ, bệu, nổi gai nhọn, rêu dày vàng dính: Chứng thực nhiệt, ngoại cảm hóa nhiệt, thấp nhiệt kết huyết phận.
 6. Lưỡi non đỏ, ít rêu (bong tróc): Chứng hư nhiệt, nhiệt thịnh thương âm, nội thương khí huyết chưa hồi phục.
 7. Lưỡi mỏng nhỏ, đỏ sậm, rêu cực mỏng: Nhiệt vào dinh huyết, Âm hư hỏa vượng.
 8. Lưỡi tím bầm (xanh tối), hằn răng, rêu trắng nhuận: Hàn ngưng huyết tụ, Âm hàn kèm thấp.
 9. Lưỡi nhợt tối, săn chắc vân thô, rêu dày đặc trắng: Chứng thực, hàn thấp đờm trọc uất kết hóa nhiệt.
 10. Lưỡi đỏ bệu, rìa nổi gai, rêu dày thô trắng kiêm vàng: Tỳ vị thấp nhiệt đờm trọc vật lộn, ôn bệnh hóa táo thương âm.
-11. Lưỡi xanh tím sắc tối, bệu có dấu răng, rêu dày bẩn trắng khô: Trúng độc khí huyết ứ trệ, thấp nhiệt tích tụ huyết.
-12. Lưỡi trắng nhạt tối, mỏng nhỏ, rêu mỏng (gốc rêu dày vàng): Khí huyết hư, thấp nhiệt hạ tiêu ngăn trở.
-13. Lưỡi đỏ tối mềm yếu, rìa nổi gai, rêu dày trắng khô (gốc xám): Nhiệt độc cực thịnh xâm nhập huyết phận/tâm.
-14. Lưỡi đỏ nhạt, mỏng nhỏ, rìa/chóp nổi gai nhọn, rêu dày trắng khô kiêm vàng nhạt: Ôn bệnh khí phận nhiệt cực, Tâm Can hỏa vượng.
-15. Lưỡi đỏ tối, giữa tụ ban/nứt nẻ, rêu dày trắng kiêm vàng khô nứt: Nhiệt vào dinh huyết (phát ban), âm suy đờm trọc bất hóa.
-16. Lưỡi đỏ, rạn nứt sâu (như dao cứa), rêu cực ít: Thực nhiệt nội bức thương âm, thể chất âm hư, huyết suy dịch cạn.
-17. Lưỡi đỏ nhạt phình to, hằn răng, chóp nứt nẻ, rêu mỏng trắng: Tâm huyết hao hụt, Thận âm hao tổn, Tâm Thận bất giao.
+11. Lưỡi xanh tím tối, bệu có dấu răng, rêu bẩn trắng khô: Trúng độc khí huyết ứ trệ, thấp nhiệt tích tụ huyết.
+12. Lưỡi trắng nhạt tối, mỏng nhỏ, rêu mỏng (gốc vàng): Khí huyết hư, thấp nhiệt hạ tiêu ngăn trở.
+13. Lưỡi đỏ tối mềm yếu, rìa gai, rêu đặc trắng khô (gốc xám): Nhiệt độc cực thịnh xâm nhập huyết phận/tâm.
+14. Lưỡi đỏ nhạt, mỏng nhỏ, chóp gai nhọn, rêu trắng khô kiêm vàng: Ôn bệnh khí phận nhiệt cực, Tâm Can hỏa vượng.
+15. Lưỡi đỏ tối, giữa tụ ban/nứt nẻ, rêu dày trắng/vàng khô nứt: Nhiệt vào dinh huyết (phát ban), âm suy đờm trọc bất hóa.
+16. Lưỡi đỏ, rạn nứt sâu (như dao cứa), rêu cực ít: Thực nhiệt nội bức thương âm, huyết suy dịch cạn.
+17. Lưỡi đỏ nhạt phình to, hằn răng, chóp nứt, rêu mỏng trắng: Tâm huyết hao hụt, Thận âm hao tổn.
 18. Lưỡi nhợt non bệu, hằn răng, rêu dày trắng nhuận ướt: Hàn thấp uẩn thịnh, Tỳ hư thấp thịnh.
 19. Lưỡi nhợt bệu, hằn răng, rêu dày trắng kiêm vàng: Tỳ hư, Dương hư hàn thấp hóa nhiệt.
-20. Lưỡi trắng nhợt phình to, rìa gai, khối u sưng viêm loét, rêu dày trắng: Tâm tỳ uất hỏa, khí kết hóa viêm, Hỏa độc nội hao (Nguy cơ ung thư).
-21. Lưỡi đỏ nhạt, hai rìa và chóp nổi gai/mụn nước không loét, rêu mỏng trắng khô: Nấm lưỡi (u lành), Can uất khí kết, Tâm kinh uất hỏa.
-22. Gân mạch dưới lưỡi xanh tím, phình to phân nhánh rõ: Đàm nhiệt nội trở, khí trệ huyết tụ.
-23. Lưỡi hồng nhạt, mỏng nhỏ non, cứng đờ khó co duỗi, quang bóng vô rêu (Chứng nguy): Âm huyết không đủ phong hư nội động, điềm báo trúng phong.
-24. Lưỡi đỏ khô, mềm yếu khó cử động, nứt giữa, rêu vàng/trắng bẩn nát (Chứng nguy): Nhiệt tà đốt hao tân thương, Thấp nhiệt chưa sạch thận vị âm kiệt, Âm hư hỏa vượng.
-25. Lưỡi đỏ tím thẫm, sắc tối, phình to lệch phải, rêu mỏng trắng (gốc dày): Can phong phát giật, Phong đờm chủ lạc, triệu chứng trúng phong.
-26. Lưỡi đỏ nhạt, non, thè ra lệch trái, rêu mỏng ít trắng: Trúng phong, Phong đờm trở lạc.
-27. Lưỡi non đỏ, quang bóng không rêu, rụt co ngắn khô tân dịch (Chứng nguy): Nhiệt thịnh thương âm động phong, Thận vị âm kiệt táo nhiệt sinh phong.
-28. Lưỡi trắng nhợt non bệu, hằn răng, rêu dày trắng nhuận trơn: Chứng hàn lý hư, Hàn ẩm ngưng trệ tại Tỳ, Dương hư hàn đàm ngưng trệ Phế.
-29. Lưỡi đỏ, mỏng nhỏ, rêu trắng dày nứt nẻ chuyển vàng: Ôn bệnh nội nhiệt bạo phát tân dịch hao thương, Khí phân nhiệt cực.
-30. Lưỡi đỏ giáng, nổi gai nhọn cao, rêu dày đặc đen khô nứt: Nhiệt cực tân dịch khô, Nhiệt độc xâm phạm tâm, Huyết uẩn thấp nhiệt đàm nhiệt phủ thực.
-31. Lưỡi đỏ giáng, non, rêu dày đặc nhuận trơn, đỏ vàng chuyển đen (như nấm mốc): Thấp nhiệt kết thái âm, tràng vị thấp trọc kết tụ hóa nhiệt, thấp ôn nhiệt vào dinh huyết, trong hàn ngoài nhiệt.
-32. Lưỡi trắng nhợt, non bệu, hằn răng, rêu dày trắng nhuận trơn: Dương hư thủy thấp bất hóa (thấp tụ thành đàm ẩm), Hàn thấp ngưng trệ tại tỳ.
-33. Lưỡi đỏ nhạt, nhiều nứt nẻ nhỏ, rêu vàng khô từng mảng (giữa lưỡi rêu ít): Nhiệt thịnh thương tân, Âm dịch hao tổn, Tràng vị nhiệt kết thương âm.
-34. Lưỡi đỏ nhạt, phình to, hằn răng, chóp gai đỏ, rêu dày đặc trắng dính: Thấp trọc uẩn kết, dương khí suy kiệt, Tỳ hư thấp thịnh.
-35. Lưỡi đỏ sắc tối, rêu bong tróc bẩn (bã đậu, cào có thể đi): Thấp nhiệt vào huyết (khí âm đều thương), Thấp trọc bất hóa, vị khí suy.
-36. Lưỡi nhợt, phình to, hằn răng, giữa nứt nẻ, rêu trắng khô hạt thô: Nhiệt kết thương tổn tân dịch, khí hư dương khí hư hao tân dịch.
-37. Lưỡi đỏ nhạt, chóp gai đỏ, hằn răng, rêu dày trắng (chóp mỏng, gốc dày, rìa vàng): Nhiệt tại thượng tiêu, Ngoại cảm phong hàn tại biểu.
-38. Lưỡi đỏ tươi rắn chắc, rêu dày trắng nhuận trơn: Lý nhiệt kèm theo thấp.
-39. Lưỡi nhợt kèm sắc xanh, rêu rấy trắng kiêm vàng: Mùa hè thử nhiệt (ăn đồ lạnh sinh hàn), Hàn thấp uẩn tích thâm nhập huyết phận, Chân hàn giả nhiệt.
---------------------------------------------------
+20. Lưỡi trắng nhợt phình to, rìa gai, khối u sưng viêm loét: Tâm tỳ uất hỏa, khí kết hóa viêm (Nguy cơ u).
+21. Lưỡi đỏ nhạt, rìa chóp nổi gai/mụn nước, rêu mỏng trắng khô: Nấm lưỡi, Can uất khí kết, Tâm kinh uất hỏa.
+22. Gân mạch dưới lưỡi xanh tím, phình to phân nhánh: Đàm nhiệt nội trở, khí trệ huyết tụ.
+23. Lưỡi hồng nhạt, mỏng nhỏ non, cứng đờ khó co duỗi, bóng vô rêu: Âm huyết không đủ phong hư nội động.
+24. Lưỡi đỏ khô, mềm yếu, nứt giữa, rêu bẩn nát: Nhiệt tà đốt hao tân thương, Âm hư hỏa vượng.
+25. Lưỡi đỏ tím thẫm, tối, lệch phải, rêu mỏng trắng: Can phong phát giật, Phong đờm chủ lạc.
+26. Lưỡi đỏ nhạt, non, thè ra lệch trái, rêu mỏng ít: Trúng phong, Phong đờm trở lạc.
+27. Lưỡi non đỏ, bóng không rêu, rụt co ngắn khô tân dịch: Nhiệt thịnh thương âm động phong, Thận vị âm kiệt.
+28. Lưỡi trắng nhợt non bệu, hằn răng, rêu dày trắng nhuận trơn: Hàn ẩm ngưng trệ tại Tỳ/Phế, Dương hư.
+29. Lưỡi đỏ, mỏng nhỏ, rêu trắng dày nứt nẻ chuyển vàng: Ôn bệnh nội nhiệt bạo phát tân dịch hao thương.
+30. Lưỡi đỏ giáng, gai nhọn cao, rêu đặc đen khô nứt: Nhiệt cực tân dịch khô, Nhiệt độc xâm phạm tâm.
+31. Lưỡi đỏ giáng, non, rêu dày đỏ vàng chuyển đen (như nấm mốc): Thấp nhiệt kết thái âm, tràng vị thấp trọc.
+32. Lưỡi trắng nhợt, non bệu, hằn răng, rêu đặc trắng nhuận trơn: Dương hư thủy thấp bất hóa, Hàn thấp ngưng trệ.
+33. Lưỡi đỏ nhạt, nứt nẻ nhỏ, rêu vàng khô mảng: Nhiệt thịnh thương tân, Tràng vị nhiệt kết.
+34. Lưỡi đỏ nhạt, phình to, hằn răng, chóp gai đỏ, rêu dày trắng dính: Thấp trọc uẩn kết, dương khí suy kiệt.
+35. Lưỡi đỏ tối, rêu bong tróc bẩn (bã đậu): Thấp nhiệt vào huyết, Thấp trọc bất hóa, vị khí suy.
+36. Lưỡi nhợt, phình to, hằn răng, giữa nứt nẻ, rêu trắng khô hạt thô: Nhiệt kết thương tổn tân dịch, khí hư dương hư.
+37. Lưỡi đỏ nhạt, chóp gai đỏ, hằn răng, rêu dày trắng (rìa vàng): Nhiệt tại thượng tiêu, Ngoại cảm phong hàn.
+38. Lưỡi đỏ tươi rắn chắc, rêu đặc trắng nhuận trơn: Lý nhiệt kèm theo thấp.
+39. Lưỡi nhợt kèm sắc xanh, rêu rấy trắng kiêm vàng: Hàn thấp uẩn tích thâm nhập huyết phận, Chân hàn giả nhiệt.
 
-YÊU CẦU BẮT BUỘC: 
-- Đối chiếu tỉ mỉ các đặc điểm trên ảnh tải lên với bộ 40 ca trên để tìm ra sự tương đồng cao nhất. Chú ý đặc biệt đến các dấu hiệu phức tạp.
-- Đưa ra kết luận chi tiết, chuyên sâu, và phong phú.
-- CHỈ TRẢ VỀ ĐÚNG cấu trúc JSON sau, tuyệt đối không có markdown (\`\`\`json) hay text thừa:
+BƯỚC 2: KÊ ĐƠN TỪ KHO TÀNG "PHƯƠNG THANG Y HỌC CỔ TRUYỀN"
+Dựa vào Thể Bệnh đã chốt ở Bước 1, bạn HÃY TỰ ĐỘNG LỤC TÌM TRONG KIẾN THỨC CỦA MÌNH về các phương thang cổ truyền kinh điển (như Tứ Vật, Bát Trân, Long Đởm Tả Can, Điều Trung Ích Khí, Tứ Nghịch, Lục Vị, Bát Tiên, v.v...) để đưa ra bài thuốc ĐÚNG NHẤT chuyên trị chứng đó, kèm liều lượng cụ thể từng vị.
+
+YÊU CẦU BẮT BUỘC CUỐI CÙNG: 
+CHỈ TRẢ VỀ ĐÚNG cấu trúc JSON sau, tuyệt đối không có markdown (\`\`\`json) hay text thừa:
 {
   "chat_luoi": { "mau_sac": "...", "than_khi": "...", "y_nghia": "..." },
   "hinh_dang": { "mo_ta": "...", "y_nghia": "..." },
